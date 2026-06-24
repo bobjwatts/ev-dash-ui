@@ -10,6 +10,19 @@
         maps speed_kmh → rotation angle using SPEED_ANGLE_MIN / SPEED_ANGLE_MAX.
     -->
 
+    <previews>
+        <!--
+            Preview canvas sized to the dial + a little breathing room.
+            Dark background matches the EV dash theme.
+        -->
+        <preview
+            width="620" height="620"
+            style_bg_color="#COLOR_BG"
+            style_flex_main_place="center"
+            style_flex_cross_place="center"
+        />
+    </previews>
+
     <api>
         <prop name="speed" type="subject" default="speed_kmh"/>
         <prop name="soc"   type="subject" default="state_of_charge_pct"/>
