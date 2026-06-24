@@ -91,9 +91,9 @@
               face:   582×582 → 540×540 displayed
               needle: 33×274  →  31×255 displayed, pivot at bottom-center
         -->
-        <file name="dial_speed_face_border" src="images/dial_speed_face_border.png"/>
-        <file name="dial_speed_face"        src="images/dial_speed_face.png"/>
-        <file name="dial_speed_needle"      src="images/dial_speed_needle.png"/>
+        <file name="dial_speed_face_border" src_path="images/dial_speed_face_border.png"/>
+        <file name="dial_speed_face"        src_path="images/dial_speed_face.png"/>
+        <file name="dial_speed_needle"      src_path="images/dial_speed_needle.png"/>
     </images>
 
     <fonts>
