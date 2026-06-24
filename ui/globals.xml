@@ -53,9 +53,10 @@
 
     <subjects>
         <!-- ── Drivetrain ─────────────────────────────────── -->
-        <int   name="speed_kmh"             value="0"/>
-        <int   name="gear"                  value="0"/>   <!-- maps to GearPosition -->
-        <int   name="regen_level"           value="0"/>   <!-- 0–3 paddle regen steps -->
+        <int    name="speed_kmh"            value="0"/>
+        <int    name="gear"                 value="0"/>   <!-- maps to GearPosition enum -->
+        <string name="gear_str"             value="P"/>   <!-- firmware sets: P R N D B -->
+        <int    name="regen_level"          value="0"/>   <!-- 0–3 paddle regen steps -->
 
         <!-- ── Power & energy ─────────────────────────────── -->
         <float name="power_kw"              value="0.0"/>  <!-- + discharge / - regen -->
