@@ -1,23 +1,21 @@
 <globals>
     <api>
-        <enumdefs>
-            <!-- Gear selector state -->
-            <enumdef name="GearPosition">
-                <member name="GEAR_PARK"    value="0"/>
-                <member name="GEAR_REVERSE" value="1"/>
-                <member name="GEAR_NEUTRAL" value="2"/>
-                <member name="GEAR_DRIVE"   value="3"/>
-                <member name="GEAR_BRAKE"   value="4"/>
-            </enumdef>
+        <!-- Gear selector state -->
+        <enumdef name="GearPosition">
+            <enum name="GEAR_PARK"    value="0"/>
+            <enum name="GEAR_REVERSE" value="1"/>
+            <enum name="GEAR_NEUTRAL" value="2"/>
+            <enum name="GEAR_DRIVE"   value="3"/>
+            <enum name="GEAR_BRAKE"   value="4"/>
+        </enumdef>
 
-            <!-- Ready / fault state for status indicators -->
-            <enumdef name="SysState">
-                <member name="SYS_FAULT"   value="0"/>
-                <member name="SYS_READY"   value="1"/>
-                <member name="SYS_ACTIVE"  value="2"/>
-                <member name="SYS_CHARGE"  value="3"/>
-            </enumdef>
-        </enumdefs>
+        <!-- Ready / fault state for status indicators -->
+        <enumdef name="SysState">
+            <enum name="SYS_FAULT"   value="0"/>
+            <enum name="SYS_READY"   value="1"/>
+            <enum name="SYS_ACTIVE"  value="2"/>
+            <enum name="SYS_CHARGE"  value="3"/>
+        </enumdef>
     </api>
 
     <consts>
