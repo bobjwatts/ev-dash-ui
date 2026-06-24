@@ -1,0 +1,128 @@
+name: Build & Deploy Preview
+
+# Runs on every push to main and on manual trigger.
+# Produces a WASM preview runtime deployed to GitHub Pages.
+# To preview in the LVGL online editor (pro.lvgl.io):
+#   1. Open your project XML in the editor.
+#   2. Click Preview → "Custom runtime URL".
+#   3. Paste:  https://<your-gh-username>.github.io/<repo-name>/lved-runtime.js
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "ui/**"
+      - ".github/workflows/preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only allow one deployment at a time; cancel in-progress runs on new push.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Download LVGL CLI
+        run: |
+          curl -L https://github.com/lvgl/lvgl_editor/releases/download/v.0.3.0/LVGL_CLI-0.3.0-linux-mac.zip \
+               -o lvgl-cli.zip
+          unzip lvgl-cli.zip -d lvgl-cli
+          node ./lvgl-cli/lved-cli.js -V
+
+      - name: Generate C from XML
+        run: node ./lvgl-cli/lved-cli.js generate ui -ss
+
+      - name: Compile WASM preview runtime
+        run: node ./lvgl-cli/lved-cli.js compile ui
+
+      - name: Prepare Pages output
+        run: |
+          mkdir -p dist
+
+          # Copy the compiled runtime files (JS + WASM)
+          cp ui/runtime/lved-runtime.js dist/ 2>/dev/null || \
+          cp ui/preview-bin/lved-runtime.js dist/ 2>/dev/null || \
+          echo "WARNING: lved-runtime.js not found — compile step may have failed"
+
+          find ui/runtime ui/preview-bin -name "*.wasm" \
+               -exec cp {} dist/ \; 2>/dev/null || true
+
+          # Simple landing page showing the runtime URL for use in the LVGL editor
+          PAGES_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/$(basename $GITHUB_REPOSITORY)"
+          cat > dist/index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <title>EV Dash – LVGL Preview</title>
+            <style>
+              body { margin: 0; font-family: system-ui, sans-serif;
+                     background: #0A0A12; color: #F0F0F0;
+                     display: flex; flex-direction: column;
+                     align-items: center; justify-content: center;
+                     min-height: 100vh; gap: 24px; padding: 32px; box-sizing: border-box; }
+              h1  { margin: 0; font-size: 1.6rem; color: #00B4D8; }
+              p   { margin: 0; color: #A0A8B0; max-width: 560px; text-align: center; }
+              .url-box { background: #14141F; border: 1px solid #2A2A3C;
+                         border-radius: 8px; padding: 14px 20px;
+                         font-family: monospace; font-size: 0.95rem;
+                         word-break: break-all; color: #30D158;
+                         max-width: 560px; width: 100%; }
+              .steps { background: #14141F; border: 1px solid #2A2A3C;
+                       border-radius: 8px; padding: 16px 24px;
+                       max-width: 560px; width: 100%; }
+              ol { margin: 0; padding-left: 20px; color: #A0A8B0; line-height: 2; }
+              li strong { color: #F0F0F0; }
+              small { color: #50586A; }
+            </style>
+          </head>
+          <body>
+            <h1>EV Dash – Live Preview</h1>
+            <p>Use this runtime URL in the LVGL Pro Editor to preview your UI live in the browser.</p>
+            <div class="url-box">${PAGES_URL}/lved-runtime.js</div>
+            <div class="steps">
+              <ol>
+                <li>Open <strong><a href="https://pro.lvgl.io" style="color:#00B4D8">pro.lvgl.io</a></strong> and load your project XML.</li>
+                <li>Click <strong>Preview</strong> in the toolbar.</li>
+                <li>Choose <strong>Custom runtime URL</strong>.</li>
+                <li>Paste the URL above and click <strong>Load</strong>.</li>
+              </ol>
+            </div>
+            <small>Runtime built from commit ${GITHUB_SHA:0:7} on $(date -u '+%Y-%m-%d %H:%M UTC')</small>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
