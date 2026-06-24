@@ -40,7 +40,7 @@ jobs:
 
       - name: Download LVGL CLI
         run: |
-          curl -L https://github.com/lvgl/lvgl_editor/releases/download/v.0.3.0/LVGL_CLI-0.3.0-linux-mac.zip \
+          curl -L https://github.com/lvgl/lvgl_editor/releases/download/v1.2.1/LVGL_Pro_CLI-1.2.1-linux-mac.zip \
                -o lvgl-cli.zip
           unzip lvgl-cli.zip -d lvgl-cli
           node ./lvgl-cli/lved-cli.js -V

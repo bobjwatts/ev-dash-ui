@@ -125,7 +125,7 @@ If you want to regenerate the `.c`/`.h` files locally without pushing:
 
 ```bash
 # Download the CLI once
-curl -L https://github.com/lvgl/lvgl_editor/releases/download/v.0.3.0/LVGL_CLI-0.3.0-linux-mac.zip -o lvgl-cli.zip
+curl -L https://github.com/lvgl/lvgl_editor/releases/download/v1.2.1/LVGL_Pro_CLI-1.2.1-linux-mac.zip -o lvgl-cli.zip
 unzip lvgl-cli.zip -d lvgl-cli
 
 # Generate C from XML
