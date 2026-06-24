@@ -1,271 +1,128 @@
 <screen>
     <styles>
         <!-- Panel surfaces -->
-        <style name="panel_side"
-            bg_color="#COLOR_SURFACE"
-            border_width="0"
-            radius="0"
-        />
-        <style name="panel_center"
-            bg_color="#COLOR_BG"
-            border_width="0"
-            radius="0"
-        />
-        <!-- Dividers between panels -->
-        <style name="divider"
-            bg_color="#COLOR_BORDER"
-            border_width="0"
-            radius="0"
-        />
-        <!-- Odometer / trip strip at the bottom of center -->
-        <style name="odo_strip"
-            bg_color="#COLOR_SURFACE"
-            border_width="1"
-            border_color="#COLOR_BORDER"
-            radius="8"
-        />
-        <!-- SoC bar track -->
-        <style name="soc_bar_bg"
-            bg_color="#COLOR_ACCENT_DIM"
-            radius="5"
-        />
-        <!-- SoC bar fill -->
-        <style name="soc_bar_ind"
-            bg_color="#COLOR_ACCENT"
-            radius="5"
-        />
+        <style name="panel_side"   bg_color="#COLOR_SURFACE" border_width="0" radius="0"/>
+        <style name="panel_center" bg_color="#COLOR_BG"      border_width="0" radius="0"/>
+        <!-- Vertical dividers -->
+        <style name="divider"      bg_color="#COLOR_BORDER"  border_width="0" radius="0"/>
+        <!-- SoC bar styles (right panel) -->
+        <style name="soc_bar_bg"   bg_color="#COLOR_ACCENT_DIM" radius="5"/>
+        <style name="soc_bar_ind"  bg_color="#COLOR_ACCENT"     radius="5"/>
     </styles>
 
     <!--
-        Root view: full-screen horizontal flex row.
-        Three columns: left sidebar | center hero | right sidebar
+        Full-screen horizontal flex row.
+        Left sidebar (200 px) | Centre dial (flex-grow) | Right sidebar (200 px)
     -->
-    <view
-        flex_flow="row"
-        style_pad_all="0"
-        style_bg_color="#COLOR_BG"
-    >
+    <view flex_flow="row" style_pad_all="0" style_bg_color="#COLOR_BG">
 
         <!-- ══════════════════════════════════════════
              LEFT PANEL  (200 px)
-             Gear · Regen level · Temperatures
+             Gear selector · Regen level · Temperatures
         ══════════════════════════════════════════ -->
         <lv_obj
             width="200" height="600"
-            style_pad_all="20"
-            style_pad_row="4"
+            style_pad_all="20" style_pad_row="4"
             flex_flow="column"
             style_flex_main_place="center"
             style_flex_cross_place="center"
         >
-            <style name="panel_side" />
+            <style name="panel_side"/>
 
-            <!-- Gear selector -->
-            <lv_label
-                text="GEAR"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-            />
-            <lv_label
-                bind_text="gear_str"
-                style_text_color="#COLOR_ACCENT"
-                style_text_font="font_display"
-            />
+            <lv_label text="GEAR"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"/>
+            <lv_label bind_text="gear_str"
+                style_text_color="#COLOR_ACCENT" style_text_font="font_display"/>
 
-            <!-- Regen level -->
-            <lv_label
-                text="REGEN"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-                style_pad_top="24"
-            />
-            <lv_label
-                bind_text="regen_level"
-                bind_text-fmt="%d / 3"
-                style_text_color="#COLOR_OK"
-                style_text_font="font_heading"
-            />
+            <lv_label text="REGEN"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"
+                style_pad_top="24"/>
+            <lv_label bind_text="regen_level" bind_text-fmt="%d / 3"
+                style_text_color="#COLOR_OK" style_text_font="font_heading"/>
 
-            <!-- Motor temp -->
-            <lv_label
-                text="MOTOR"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-                style_pad_top="24"
-            />
-            <lv_label
-                bind_text="motor_temp_c"
-                bind_text-fmt="%d C"
-                style_text_color="#COLOR_TEXT_HI"
-                style_text_font="font_body"
-            />
+            <lv_label text="MOTOR"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"
+                style_pad_top="24"/>
+            <lv_label bind_text="motor_temp_c" bind_text-fmt="%d C"
+                style_text_color="#COLOR_TEXT_HI" style_text_font="font_body"/>
 
-            <!-- Battery temp -->
-            <lv_label
-                text="BATTERY"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-                style_pad_top="8"
-            />
-            <lv_label
-                bind_text="batt_temp_c"
-                bind_text-fmt="%d C"
-                style_text_color="#COLOR_TEXT_HI"
-                style_text_font="font_body"
-            />
+            <lv_label text="BATTERY"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"
+                style_pad_top="8"/>
+            <lv_label bind_text="batt_temp_c" bind_text-fmt="%d C"
+                style_text_color="#COLOR_TEXT_HI" style_text_font="font_body"/>
         </lv_obj>
 
-        <!-- Vertical divider -->
-        <lv_obj width="1" height="600">
-            <style name="divider" />
-        </lv_obj>
+        <lv_obj width="1" height="600"><style name="divider"/></lv_obj>
 
         <!-- ══════════════════════════════════════════
-             CENTER PANEL  (flex-grow)
-             Speed hero · Power · ODO / Trip strip
+             CENTRE PANEL  (flex-grow)
+             Speedometer dial component
         ══════════════════════════════════════════ -->
         <lv_obj
             flex_grow="1" height="600"
-            style_pad_all="24"
-            style_pad_row="0"
+            style_pad_all="0"
             flex_flow="column"
             style_flex_main_place="center"
             style_flex_cross_place="center"
         >
-            <style name="panel_center" />
+            <style name="panel_center"/>
 
-            <!-- Speed: large hero number -->
-            <lv_label
-                bind_text="speed_kmh"
-                bind_text-fmt="%d"
-                style_text_color="#COLOR_TEXT_HI"
-                style_text_font="font_display"
+            <!--
+                Speedometer component.
+                Props wire the three subjects in from globals.xml.
+                The dial sits at 580×580; the centre panel is ~624 px wide
+                at 1024 px total, so the dial is centred with ~22 px each side.
+            -->
+            <speedometer
+                speed="speed_kmh"
+                soc="state_of_charge_pct"
+                range="range_est_km"
             />
-
-            <!-- Speed unit -->
-            <lv_label
-                text="km/h"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_heading"
-            />
-
-            <!-- Power readout  (positive = discharging, negative = regen) -->
-            <lv_label
-                bind_text="power_kw"
-                bind_text-fmt="%.1f kW"
-                style_text_color="#COLOR_ACCENT"
-                style_text_font="font_heading"
-                style_pad_top="20"
-            />
-
-            <!-- ODO / Trip strip -->
-            <lv_obj
-                width="100%" height="content"
-                style_pad_all="12"
-                style_pad_column="16"
-                style_pad_top="36"
-                flex_flow="row"
-                style_flex_main_place="center"
-                style_flex_cross_place="center"
-            >
-                <style name="odo_strip" />
-
-                <lv_label
-                    text="ODO"
-                    style_text_color="#COLOR_TEXT_LO"
-                    style_text_font="font_small"
-                />
-                <lv_label
-                    bind_text="odometer_km"
-                    bind_text-fmt=" %d km"
-                    style_text_color="#COLOR_TEXT_HI"
-                    style_text_font="font_body"
-                />
-
-                <lv_label
-                    text="   |   "
-                    style_text_color="#COLOR_TEXT_LO"
-                    style_text_font="font_body"
-                />
-
-                <lv_label
-                    text="TRIP"
-                    style_text_color="#COLOR_TEXT_LO"
-                    style_text_font="font_small"
-                />
-                <lv_label
-                    bind_text="trip_km"
-                    bind_text-fmt=" %d km"
-                    style_text_color="#COLOR_TEXT_HI"
-                    style_text_font="font_body"
-                />
-            </lv_obj>
         </lv_obj>
 
-        <!-- Vertical divider -->
-        <lv_obj width="1" height="600">
-            <style name="divider" />
-        </lv_obj>
+        <lv_obj width="1" height="600"><style name="divider"/></lv_obj>
 
         <!-- ══════════════════════════════════════════
              RIGHT PANEL  (200 px)
-             State of charge · Voltage · Range
+             Battery SoC · Voltage · Range
         ══════════════════════════════════════════ -->
         <lv_obj
             width="200" height="600"
-            style_pad_all="20"
-            style_pad_row="4"
+            style_pad_all="20" style_pad_row="4"
             flex_flow="column"
             style_flex_main_place="center"
             style_flex_cross_place="center"
         >
-            <style name="panel_side" />
+            <style name="panel_side"/>
 
-            <!-- SoC percentage -->
-            <lv_label
-                text="SOC"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-            />
-            <lv_label
-                bind_text="state_of_charge_pct"
-                bind_text-fmt="%d%%"
-                style_text_color="#COLOR_ACCENT"
-                style_text_font="font_heading"
-            />
+            <lv_label text="SOC"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"/>
+            <lv_label bind_text="state_of_charge_pct" bind_text-fmt="%d%%"
+                style_text_color="#COLOR_ACCENT" style_text_font="font_heading"/>
 
-            <!-- SoC bar with bound value + overlaid readout -->
-            <lv_bar
-                width="160" height="14"
+            <lv_bar width="160" height="14"
                 min_value="0" max_value="100"
-                bind_value="state_of_charge_pct"
-            >
-                <style name="soc_bar_bg" />
-                <style name="soc_bar_ind" selector="indicator" />
+                bind_value="state_of_charge_pct">
+                <style name="soc_bar_bg"/>
+                <style name="soc_bar_ind" selector="indicator"/>
             </lv_bar>
 
-            <!-- Pack voltage -->
-            <lv_label
-                bind_text="battery_voltage_v"
-                bind_text-fmt="%.1f V"
-                style_text_color="#COLOR_TEXT_MID"
-                style_text_font="font_body"
-                style_pad_top="16"
-            />
+            <lv_label bind_text="battery_voltage_v" bind_text-fmt="%.1f V"
+                style_text_color="#COLOR_TEXT_MID" style_text_font="font_body"
+                style_pad_top="16"/>
 
-            <!-- Estimated range -->
-            <lv_label
-                text="RANGE"
-                style_text_color="#COLOR_TEXT_LO"
-                style_text_font="font_small"
-                style_pad_top="20"
-            />
-            <lv_label
-                bind_text="range_est_km"
-                bind_text-fmt="%d km"
-                style_text_color="#COLOR_OK"
-                style_text_font="font_heading"
-            />
+            <lv_label text="RANGE"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"
+                style_pad_top="20"/>
+            <lv_label bind_text="range_est_km" bind_text-fmt="%d km"
+                style_text_color="#COLOR_OK" style_text_font="font_heading"/>
+
+            <lv_label text="POWER"
+                style_text_color="#COLOR_TEXT_LO" style_text_font="font_small"
+                style_pad_top="20"/>
+            <lv_label bind_text="power_kw" bind_text-fmt="%.1f kW"
+                style_text_color="#COLOR_ACCENT" style_text_font="font_body"/>
         </lv_obj>
 
     </view>

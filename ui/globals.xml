@@ -84,7 +84,16 @@
     </subjects>
 
     <images>
-        <!-- Add <file> or <data> image tags here -->
+        <!--
+            Speedometer dial assets (exported from Figma at original resolution).
+            Displayed at ~93% scale (238/256) to fit a 600 px tall screen.
+              border: 625×625 → 580×580 displayed
+              face:   582×582 → 540×540 displayed
+              needle: 33×274  →  31×255 displayed, pivot at bottom-center
+        -->
+        <file name="dial_speed_face_border" src="images/dial_speed_face_border.png"/>
+        <file name="dial_speed_face"        src="images/dial_speed_face.png"/>
+        <file name="dial_speed_needle"      src="images/dial_speed_needle.png"/>
     </images>
 
     <fonts>
