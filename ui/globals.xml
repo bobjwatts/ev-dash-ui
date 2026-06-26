@@ -88,6 +88,12 @@
 		<int name="fault_code" value="0" />
 
 		<int name="dark_theme" value="0" help="0:light 1:dark" />
+
+		<!-- ── Speedometer needle ────────────────────────────── -->
+		<!-- Pre-mapped rotation angle in tenths of degrees (0–3599).        -->
+		<!-- Firmware maps speed_kmh → angle and writes this subject.        -->
+		<!-- e.g. 0 km/h → 2250 (225.0°),  200 km/h → 3150 (315.0°)        -->
+		<int name="speed_range" value="2250" />
 	</subjects>
 
 	<images>
@@ -114,6 +120,10 @@
 		<bin name="font_display" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="96" bpp="4" />
 		<bin name="font_heading" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="40" bpp="4" />
 		<bin name="font_body" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="22" bpp="4" />
-		<bin name="font_small" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="16" bpp="4" />
+		<bin name="font_small"         as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="16" bpp="4" />
+		<!-- Geist Semibold — used by lv_scale tick labels in speedometer.  -->
+		<!-- Drop fonts/Geist-SemiBold.ttf into ui/fonts/ to activate.      -->
+		<!-- Until then the scale falls back to the default LVGL font.       -->
+		<!-- <bin name="geist_semibold_12" as_file="false" src_path="fonts/Geist-SemiBold.ttf" size="12" bpp="4" /> -->
 	</fonts>
 </globals>

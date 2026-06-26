@@ -55,9 +55,10 @@
 			width="200"
 			height="200"
 			arc_width="0"
-			text_font="geist_semibold_12"
+			text_font="font_small"
 			text_color="0x00ff0f"
 		/>
+		<!-- TODO: swap text_font to geist_semibold_12 once fonts/Geist-SemiBold.ttf is added -->
 		<style name="style_scale_main_dark" text_color="0x1A2030" />
 	</styles>
 
