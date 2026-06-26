@@ -1,112 +1,119 @@
 <globals>
-    <api>
-        <!-- Gear selector state -->
-        <enumdef name="GearPosition">
-            <enum name="GEAR_PARK"    value="0"/>
-            <enum name="GEAR_REVERSE" value="1"/>
-            <enum name="GEAR_NEUTRAL" value="2"/>
-            <enum name="GEAR_DRIVE"   value="3"/>
-            <enum name="GEAR_BRAKE"   value="4"/>
-        </enumdef>
+	<api>
+		<!-- Gear selector state -->
+		<enumdef name="GearPosition">
+			<enum name="GEAR_PARK" value="0" />
+			<enum name="GEAR_REVERSE" value="1" />
+			<enum name="GEAR_NEUTRAL" value="2" />
+			<enum name="GEAR_DRIVE" value="3" />
+			<enum name="GEAR_BRAKE" value="4" />
+		</enumdef>
 
-        <!-- Ready / fault state for status indicators -->
-        <enumdef name="SysState">
-            <enum name="SYS_FAULT"   value="0"/>
-            <enum name="SYS_READY"   value="1"/>
-            <enum name="SYS_ACTIVE"  value="2"/>
-            <enum name="SYS_CHARGE"  value="3"/>
-        </enumdef>
-    </api>
+		<!-- Ready / fault state for status indicators -->
+		<enumdef name="SysState">
+			<enum name="SYS_FAULT" value="0" />
+			<enum name="SYS_READY" value="1" />
+			<enum name="SYS_ACTIVE" value="2" />
+			<enum name="SYS_CHARGE" value="3" />
+		</enumdef>
+	</api>
 
-    <consts>
-        <!-- Background & surface -->
-        <color name="COLOR_BG"          value="0x0A0A12"/>
-        <color name="COLOR_SURFACE"     value="0x14141F"/>
-        <color name="COLOR_BORDER"      value="0x2A2A3C"/>
+	<consts>
+		<!-- Background & surface -->
+		<color name="COLOR_BG" value="0x0A0A12" />
+		<color name="COLOR_SURFACE" value="0x14141F" />
+		<color name="COLOR_BORDER" value="0x2A2A3C" />
 
-        <!-- Accent palette -->
-        <color name="COLOR_ACCENT"      value="0x00B4D8"/>
-        <color name="COLOR_ACCENT_DIM"  value="0x006A80"/>
+		<!-- Accent palette -->
+		<color name="COLOR_ACCENT" value="0x00B4D8" />
+		<color name="COLOR_ACCENT_DIM" value="0x006A80" />
 
-        <!-- Semantic status colours -->
-        <color name="COLOR_OK"          value="0x30D158"/>
-        <color name="COLOR_WARNING"     value="0xFF9F0A"/>
-        <color name="COLOR_DANGER"      value="0xFF3B30"/>
+		<!-- Semantic status colours -->
+		<color name="COLOR_OK" value="0x30D158" />
+		<color name="COLOR_WARNING" value="0xFF9F0A" />
+		<color name="COLOR_DANGER" value="0xFF3B30" />
 
-        <!-- Text hierarchy -->
-        <color name="COLOR_TEXT_HI"     value="0xF0F0F0"/>
-        <color name="COLOR_TEXT_MID"    value="0xA0A8B0"/>
-        <color name="COLOR_TEXT_LO"     value="0x50586A"/>
+		<!-- Text hierarchy -->
+		<color name="COLOR_TEXT_HI" value="0xF0F0F0" />
+		<color name="COLOR_TEXT_MID" value="0xA0A8B0" />
+		<color name="COLOR_TEXT_LO" value="0x50586A" />
 
-        <!-- SoC colour thresholds -->
-        <int   name="SOC_WARN_PCT"      value="20"/>
-        <int   name="SOC_CRIT_PCT"      value="10"/>
+		<!-- SoC colour thresholds -->
+		<int name="SOC_WARN_PCT" value="20" />
+		<int name="SOC_CRIT_PCT" value="10" />
 
-        <!-- Temp warning thresholds (°C) -->
-        <int   name="TEMP_WARN_C"       value="70"/>
-        <int   name="TEMP_CRIT_C"       value="85"/>
-    </consts>
+		<!-- Temp warning thresholds (°C) -->
+		<int name="TEMP_WARN_C" value="70" />
+		<int name="TEMP_CRIT_C" value="85" />
+	</consts>
 
-    <styles>
-        <!-- Add shared <style> tags here as the design grows -->
-    </styles>
+	<styles>
+		<!-- Add shared <style> tags here as the design grows -->
+	</styles>
 
-    <subjects>
-        <!-- ── Drivetrain ─────────────────────────────────── -->
-        <int    name="speed_kmh"            value="0"/>
-        <int    name="gear"                 value="0"/>   <!-- maps to GearPosition enum -->
-        <string name="gear_str"             value="P"/>   <!-- firmware sets: P R N D B -->
-        <int    name="regen_level"          value="0"/>   <!-- 0–3 paddle regen steps -->
+	<subjects>
+		<!-- ── Drivetrain ─────────────────────────────────── -->
+		<int name="speed_kmh" value="0" />
+		<int name="gear" value="0" />
+		<!-- maps to GearPosition enum -->
+		<string name="gear_str" value="P" />
+		<!-- firmware sets: P R N D B -->
+		<int name="regen_level" value="0" />
+		<!-- 0–3 paddle regen steps -->
 
-        <!-- ── Power & energy ─────────────────────────────── -->
-        <float name="power_kw"              value="0.0"/>  <!-- + discharge / - regen -->
-        <int   name="energy_kwh_remaining"  value="0"/>
+		<!-- ── Power & energy ─────────────────────────────── -->
+		<float name="power_kw" value="0.0" />
+		<!-- + discharge / - regen -->
+		<int name="energy_kwh_remaining" value="0" />
 
-        <!-- ── Battery ────────────────────────────────────── -->
-        <int   name="state_of_charge_pct"   value="100"/>
-        <float name="battery_voltage_v"     value="0.0"/>
-        <float name="battery_current_a"     value="0.0"/>
-        <int   name="batt_temp_c"           value="0"/>
+		<!-- ── Battery ────────────────────────────────────── -->
+		<int name="state_of_charge_pct" value="100" />
+		<float name="battery_voltage_v" value="0.0" />
+		<float name="battery_current_a" value="0.0" />
+		<int name="batt_temp_c" value="0" />
 
-        <!-- ── Motor / inverter ───────────────────────────── -->
-        <int   name="motor_temp_c"          value="0"/>
-        <int   name="inverter_temp_c"       value="0"/>
-        <int   name="motor_rpm"             value="0"/>
+		<!-- ── Motor / inverter ───────────────────────────── -->
+		<int name="motor_temp_c" value="0" />
+		<int name="inverter_temp_c" value="0" />
+		<int name="motor_rpm" value="0" />
 
-        <!-- ── Trip / odometer ───────────────────────────── -->
-        <int   name="odometer_km"           value="0"/>
-        <int   name="trip_km"               value="0"/>
-        <int   name="range_est_km"          value="0"/>
+		<!-- ── Trip / odometer ───────────────────────────── -->
+		<int name="odometer_km" value="0" />
+		<int name="trip_km" value="0" />
+		<int name="range_est_km" value="0" />
 
-        <!-- ── System status ─────────────────────────────── -->
-        <int   name="sys_state"             value="1"/>  <!-- maps to SysState -->
-        <int   name="fault_code"            value="0"/>
-    </subjects>
+		<!-- ── System status ─────────────────────────────── -->
+		<int name="sys_state" value="1" />
+		<!-- maps to SysState -->
+		<int name="fault_code" value="0" />
 
-    <images>
-        <!--
+		<int name="dark_theme" value="0" help="0:light 1:dark" />
+	</subjects>
+
+	<images>
+		<!--
             Speedometer dial assets (exported from Figma at original resolution).
             Displayed at ~93% scale (238/256) to fit a 600 px tall screen.
               border: 625×625 → 580×580 displayed
               face:   582×582 → 540×540 displayed
               needle: 33×274  →  31×255 displayed, pivot at bottom-center
         -->
-        <file name="dial_speed_face_border" src_path="images/dial_speed_face_border.png"/>
-        <file name="dial_speed_face"        src_path="images/dial_speed_face.png"/>
-        <file name="dial_speed_needle"      src_path="images/dial_speed_needle.png"/>
-    </images>
+		<file name="dial_speed_face_border" src_path="images/dial_speed_face_border.png" />
+		<file name="dial_speed_face" src_path="images/dial_speed_face.png" />
+		<file name="dial_speed_needle" src_path="images/dial_speed_needle.png" />
+	</images>
 
-    <fonts>
-        <!--
+	<fonts>
+		<!--
             Montserrat Medium — bundled with LVGL CLI.
             Three sizes for a 1024×600 display:
               font_display  → hero speed/SoC numbers
               font_heading  → section labels, gear indicator
               font_body     → units, warnings, small values
         -->
-        <bin name="font_display"  as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="96" bpp="4"/>
-        <bin name="font_heading"  as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="40" bpp="4"/>
-        <bin name="font_body"     as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="22" bpp="4"/>
-        <bin name="font_small"    as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="16" bpp="4"/>
-    </fonts>
+		<bin name="font_display" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="96" bpp="4" />
+		<bin name="font_heading" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="40" bpp="4" />
+		<bin name="font_body" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="22" bpp="4" />
+		<bin name="font_small" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="16" bpp="4" />
+	</fonts>
 </globals>
