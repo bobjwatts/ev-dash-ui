@@ -1,2 +1,7 @@
-preview-build
+# LVGL Editor preview output (see also root .gitignore)
+preview-build/
+preview-bin/
 .cache.json
+
+# Editor-local overrides
+project_local.xml

@@ -1,198 +1,30 @@
 <component>
-	<!--
-        Speedometer dial component.
-        Assets: dial_speed_face_border (625×625), dial_speed_face (582×582),
-                dial_speed_needle (33×274 — pivot at bottom-center).
-        All scaled to ~93 % (scale 238/256) to fit a 600 px tall screen.
-
-        Needle rotation is driven by speedometer_needle.c (via user_config.cmake).
-        The C code attaches an lv_subject observer to the needle image object and
-        maps speed_kmh → rotation angle using SPEED_ANGLE_MIN / SPEED_ANGLE_MAX.
-    -->
-
 	<previews>
-		<!--
-            Preview canvas sized to the dial + a little breathing room.
-            Dark background matches the EV dash theme.
-        -->
-		<preview
-			width="820"
-			height="820"
-			style_bg_color="#COLOR_BG"
-			style_flex_main_place="center"
-			style_flex_cross_place="center"
-			style_bg_opa="0"
-		/>
+		<preview width="439" height="439" style_bg_color="#COLOR_BG" />
 	</previews>
 
 	<api>
 		<prop name="speed" type="subject" default="speed_kmh" />
-		<prop name="speed_range" type="subject" default="speed_range" />
-		<prop name="soc" type="subject" default="state_of_charge_pct" />
-		<prop name="range" type="subject" default="range_est_km" />
+		<prop name="needle_angle" type="subject" default="speed_needle_angle" />
 	</api>
 
-	<styles>
-		<!-- Speed indicator arc (thin orange sweep overlaying the scale) -->
-		<style name="speed_track" arc_color="0x1A2030" arc_width="4" />
-		<style name="speed_ind" arc_color="0xFFAA00" arc_width="4" />
-
-		<!-- SoC arc at bottom (green, matches Figma) -->
-		<style name="soc_track" arc_color="0x1A2030" arc_width="8" />
-		<style name="soc_ind" arc_color="#COLOR_OK" arc_width="8" />
-
-		<!-- Hide arc knob on both arcs -->
-		<style name="no_knob" bg_opa="100" border_width="20" pad_all="0" />
-
-		<style name="style_scale_ticks" line_color="0xef4444" line_width="4" line_opa="30%" length="5" />
-		<style name="style_scale_ticks_dark" line_color="0x00ff0f" />
-
-		<!-- Color of the section. Its max value is bound to a subject -->
-		<style name="style_scale_section_ticks" line_color="0xFFAA00" line_width="12" line_opa="100%" />
-
-		<style
-			name="style_scale_main"
-			width="200"
-			height="200"
-			arc_width="0"
-			text_font="font_small"
-			text_color="0x00ff0f"
-		/>
-		<!-- TODO: swap text_font to geist_semibold_12 once fonts/Geist-SemiBold.ttf is added -->
-		<style name="style_scale_main_dark" text_color="0x1A2030" />
-	</styles>
-
-	<!--
-        580×580 container — matches the displayed border size.
-        All children use align="center" + y offset for layering.
-    -->
-	<view width="820" height="820" style_bg_opa="0" style_border_width="0">
-		<!-- ── Layer 2: Inner face (tick marks, scale numerals) ───────── -->
-		<!-- 582 px source → 540 px displayed  (238/256 = 92.97 %) -->
-		<lv_image src="dial_speed_face" align="center" />
-
-		<!-- ── Layer 1: Outer bezel ring ──────────────────────────────── -->
-		<!-- 625 px source → 580 px displayed  (238/256 = 92.97 %) -->
-		<lv_image src="dial_speed_face_border" width="625" height="625" align="center" />
-
-		<!-- ── Layer 3: Speed indicator arc ──────────────────────────── -->
-		<!--
-            Default lv_arc sweep: 135° → 45° clockwise (270° gap at bottom).
-            This matches a standard automotive gauge: 0 km/h at 7:30,
-            200 km/h at 4:30, arc fills through the top.
-            Width 460 px sits just inside the face tick ring.
-        -->
-
-		<lv_scale
-			name="thermostat_scale_light"
-			align="center"
-			major_tick_every="10"
-			mode="round_inner"
-			angle_range="220"
-			min_value="0"
-			max_value="220"
-			rotation="-200"
-			width="500"
-			height="500"
-			style_line_color="0xda1616"
-			style_arc_color="0xffffff"
-			style_arc_width="2"
-			style_radius="60"
-			style_align="center"
-			style_radial_offset="40"
-			style_text_color="0x6f6fff"
-			style_line_dash_width="200"
-			draw_ticks_on_top="true"
-			total_tick_count="21"
-		>
-			<style name="style_scale_main" />
-			<bind_style name="style_scale_main_dark" subject="dark_theme" ref_value="1" />
-			<style name="style_scale_ticks" selector="items" />
-			<style name="style_scale_ticks" selector="indicator" />
-
-			<bind_style name="style_scale_ticks_dark" subject="dark_theme" ref_value="1" selector="items" />
-			<bind_style name="style_scale_ticks_dark" subject="dark_theme" ref_value="1" selector="indicator" />
-
-			<lv_scale-section
-				min_value="16"
-				bind_max_value="$speed"
-				style_items="style_scale_section_ticks"
-				style_indicator="style_scale_section_ticks"
-			/>
-		</lv_scale>
-
-		<lv_arc width="230" height="230" align="center" min_value="0" max_value="220" bind_value="$speed">
-			<style name="speed_track" />
-			<style name="speed_ind" selector="indicator" />
-		</lv_arc>
-
-		<!-- ── Layer 4: Needle image ──────────────────────────────────── -->
-		<!--
-            Needle source: 33×274 px, pointing straight up (0°).
-            Scaled to 31×255 px.  Offset y=-127 puts the bottom-center
-            (the rotation pivot) at the dial centre.
-            speedometer_needle.c sets lv_image_set_pivot(needle, 16, 274)
-            and lv_image_set_rotation() whenever $speed changes.
-            NOTE: the needle renders at a static 0° here; the C observer
-            overrides this at runtime.
-        -->
-
+	<view width="439" height="439" style_bg_opa="0" style_border_width="0" scrollable="false">
+		<!-- dial_speed_dial: face+border baked from sc_* PNGs at native size (439x439) -->
+		<lv_image src="dial_speed_dial" align="center" />
+		<speed_scale_ring value="$speed" align="center" />
+		<speed_scale_ring_fine value="$speed" align="center" />
 		<lv_image
 			src="dial_speed_needle"
 			align="top_mid"
-			y="120"
-			style_transform_pivot_y="274"
-			style_bg_color="0xffffff"
+			y="35"
+			style_transform_pivot_x="11"
+			style_transform_pivot_y="153"
+			style_bg_opa="0"
 		>
-			<bind_style_prop prop="transform_rotation" subject="$speed" />
+			<!-- pivot/y: set for your resized needle PNG (rotation centre at dial hub) -->
+			<bind_style_prop prop="transform_rotation" subject="$needle_angle" />
 		</lv_image>
 
-		<!-- ── Layer 5: Speed readout ─────────────────────────────────── -->
-		<lv_label
-			bind_text="$speed"
-			bind_text-fmt="%d"
-			style_text_color="#COLOR_TEXT_HI"
-			style_text_font="font_display"
-			align="center"
-			y="-16"
-		/>
-		<lv_label text="km/h" style_text_color="#COLOR_TEXT_LO" style_text_font="font_body" align="center" y="72" />
-
-		<!-- ── Layer 6: SoC arc (bottom of dial) ─────────────────────── -->
-		<!--
-            Smaller 260 px arc centred 80 px below dial centre.
-            Bound to state_of_charge_pct.  Green fill, dark track.
-            start_angle / end_angle: omitted → LVGL defaults (135→45).
-            You can add start_angle="200" end_angle="340" if you want the
-            arc to span only the bottom 140° instead of the full 270°.
-        -->
-		<!-- <lv_arc
-			width="260"
-			height="260"
-			align="center"
-			y="80"
-			bind_value="$soc"
-			min_value="-50"
-			max_value="220"
-			clickable="false"
-		>
-			<style name="soc_track" />
-			<style name="soc_ind" selector="indicator" />
-			<style name="no_knob" selector="knob" />
-		</lv_arc> -->
-
-		<!-- SoC label centred inside the arc -->
-		<!-- <lv_label text="SOC" style_text_color="#COLOR_TEXT_LO" style_text_font="font_small" align="center" y="160" /> -->
-
-		<!-- ── Layer 7: Range label ───────────────────────────────────── -->
-		<!-- <lv_label
-			bind_text="$range"
-			bind_text-fmt="%d km"
-			style_text_color="#COLOR_OK"
-			style_text_font="font_body"
-			align="center"
-			y="200"
-		/>
-		<lv_label text="range" style_text_color="#COLOR_TEXT_LO" style_text_font="font_small" align="center" y="222" /> -->
+		<gauge_center_readout value="$speed" unit="km/h" value_y="-11" unit_y="30" align="center" />
 	</view>
 </component>

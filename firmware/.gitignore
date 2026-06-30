@@ -1,0 +1,11 @@
+# ESP-IDF build & fetched components (see root .gitignore)
+build/
+managed_components/
+dependencies.lock
+sdkconfig
+sdkconfig.old
+.sdkconfig.*
+
+# One-off gcc / toolchain experiments
+_gcc_test*
+*.o

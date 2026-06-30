@@ -19,24 +19,42 @@
 	</api>
 
 	<consts>
-		<!-- Background & surface -->
-		<color name="COLOR_BG" value="0x0A0A12" />
-		<color name="COLOR_SURFACE" value="0x14141F" />
-		<color name="COLOR_BORDER" value="0x2A2A3C" />
+		<!-- ── Brand palette ─────────────────────────────────── -->
+		<color name="COLOR_YELLOW" value="0xFAD719" />
+		<color name="COLOR_YELLOW_DARK" value="0xFF6F00" />
+		<color name="COLOR_GREY_LIGHT" value="0xD9D9D9" />
+		<color name="COLOR_GREY_DARK" value="0x474645" />
+		<color name="COLOR_GREEN" value="0x0DFF00" />
+		<color name="COLOR_GREEN_MID" value="0x235F3F" />
+		<color name="COLOR_GREEN_DARK" value="0x042A16" />
+		<color name="COLOR_BLUE" value="0x00B2FF" />
+		<color name="COLOR_WHITE" value="0xFFFFFF" />
 
-		<!-- Accent palette -->
-		<color name="COLOR_ACCENT" value="0x00B4D8" />
-		<color name="COLOR_ACCENT_DIM" value="0x006A80" />
+		<!-- ── Semantic roles (map to palette above) ─────────── -->
+		<color name="COLOR_BG" value="0x1F1F24" />
+		<color name="COLOR_SURFACE" value="0x235F3F" />
+		<color name="COLOR_BORDER" value="0x474645" />
 
-		<!-- Semantic status colours -->
-		<color name="COLOR_OK" value="0x30D158" />
-		<color name="COLOR_WARNING" value="0xFF9F0A" />
-		<color name="COLOR_DANGER" value="0xFF3B30" />
+		<color name="COLOR_ACCENT" value="0x00B2FF" />
+		<color name="COLOR_ACCENT_DIM" value="0x235F3F" />
 
-		<!-- Text hierarchy -->
-		<color name="COLOR_TEXT_HI" value="0xF0F0F0" />
-		<color name="COLOR_TEXT_MID" value="0xA0A8B0" />
-		<color name="COLOR_TEXT_LO" value="0x50586A" />
+		<color name="COLOR_OK" value="0x0DFF00" />
+		<color name="COLOR_WARNING" value="0xFF6F00" />
+		<color name="COLOR_DANGER" value="0xFF6F00" />
+
+		<color name="COLOR_TEXT_HI" value="0xFFFFFF" />
+		<color name="COLOR_TEXT_MID" value="0xD9D9D9" />
+		<color name="COLOR_TEXT_LO" value="0x474645" />
+
+		<!-- Gauge / dial -->
+		<color name="COLOR_GAUGE_ACTIVE" value="0xFAD719" />
+		<color name="COLOR_GAUGE_TRACK" value="0x235F3F" />
+
+		<!-- Typography sizes (px) — scaled for 580 px dial on 1024×600 -->
+		<int name="FONT_SIZE_DISPLAY" value="68" />
+		<int name="FONT_SIZE_HEADING" value="28" />
+		<int name="FONT_SIZE_BODY" value="16" />
+		<int name="FONT_SIZE_SMALL" value="12" />
 
 		<!-- SoC colour thresholds -->
 		<int name="SOC_WARN_PCT" value="20" />
@@ -46,10 +64,6 @@
 		<int name="TEMP_WARN_C" value="70" />
 		<int name="TEMP_CRIT_C" value="85" />
 	</consts>
-
-	<styles>
-		<!-- Add shared <style> tags here as the design grows -->
-	</styles>
 
 	<subjects>
 		<!-- ── Drivetrain ─────────────────────────────────── -->
@@ -89,41 +103,23 @@
 
 		<int name="dark_theme" value="0" help="0:light 1:dark" />
 
-		<!-- ── Speedometer needle ────────────────────────────── -->
-		<!-- Pre-mapped rotation angle in tenths of degrees (0–3599).        -->
-		<!-- Firmware maps speed_kmh → angle and writes this subject.        -->
-		<!-- e.g. 0 km/h → 2250 (225.0°),  200 km/h → 3150 (315.0°)        -->
-		<int name="speed_range" value="2250" />
+		<int name="speed_needle_angle" value="-1090" />
 	</subjects>
 
 	<images>
-		<!--
-            Speedometer dial assets (exported from Figma at original resolution).
-            Displayed at ~93% scale (238/256) to fit a 600 px tall screen.
-              border: 625×625 → 580×580 displayed
-              face:   582×582 → 540×540 displayed
-              needle: 33×274  →  31×255 displayed, pivot at bottom-center
-        -->
-		<file name="dial_speed_face_border" src_path="images/dial_speed_face_border.png" />
-		<file name="dial_speed_face" src_path="images/dial_speed_face.png" />
-		<file name="dial_speed_needle" src_path="images/dial_speed_needle.png" />
+		<!-- Firmware uses dial_speed_dial composite (tools/gen_image_data.ps1), not these entries directly -->
+		<data name="dial_speed_needle" color_format="argb8888" src_path="images/sc_dial_speed_needle.png" />
+		<data
+			name="sc_dial_speed_face_border"
+			color_format="argb8888"
+			src_path="images/sc_dial_speed_face_border.png"
+		/>
 	</images>
 
 	<fonts>
-		<!--
-            Montserrat Medium — bundled with LVGL CLI.
-            Three sizes for a 1024×600 display:
-              font_display  → hero speed/SoC numbers
-              font_heading  → section labels, gear indicator
-              font_body     → units, warnings, small values
-        -->
-		<bin name="font_display" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="96" bpp="4" />
-		<bin name="font_heading" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="40" bpp="4" />
-		<bin name="font_body" as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="22" bpp="4" />
-		<bin name="font_small"         as_file="false" src_path="fonts/Montserrat_Medium.ttf" size="16" bpp="4" />
-		<!-- Geist Semibold — used by lv_scale tick labels in speedometer.  -->
-		<!-- Drop fonts/Geist-SemiBold.ttf into ui/fonts/ to activate.      -->
-		<!-- Until then the scale falls back to the default LVGL font.       -->
-		<!-- <bin name="geist_semibold_12" as_file="false" src_path="fonts/Geist-SemiBold.ttf" size="12" bpp="4" /> -->
+		<bin name="font_display" as_file="false" src_path="fonts/JetBrainsMono-Medium.ttf" size="68" bpp="4" />
+		<bin name="font_heading" as_file="false" src_path="fonts/JetBrainsMono-Medium.ttf" size="28" bpp="4" />
+		<bin name="font_body" as_file="false" src_path="fonts/JetBrainsMono-Regular.ttf" size="16" bpp="4" />
+		<bin name="font_small" as_file="false" src_path="fonts/JetBrainsMono-Regular.ttf" size="12" bpp="4" />
 	</fonts>
 </globals>

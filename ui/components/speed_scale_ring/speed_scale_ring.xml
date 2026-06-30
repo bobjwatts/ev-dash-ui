@@ -1,0 +1,75 @@
+<component>
+	<!--
+        Major speed scale ring: numerals + coarse ticks with speed section highlight.
+        Root extends lv_scale so the component has no extra wrapper container.
+    -->
+
+	<previews>
+		<preview width="360" height="360" style_bg_color="#COLOR_BG" />
+	</previews>
+
+	<api>
+		<prop name="value" type="subject" default="speed_kmh" />
+	</api>
+
+	<styles>
+		<style name="scale_ticks" line_color="#COLOR_WHITE" line_width="3" length="14" pad_radial="16" />
+		<style name="scale_ticks_dark" line_color="#COLOR_GREEN" line_width="3" length="14" />
+		<style
+			name="scale_section_ticks"
+			line_color="#COLOR_GAUGE_ACTIVE"
+			line_width="3"
+			length="14"
+			text_color="#COLOR_GAUGE_ACTIVE"
+		/>
+
+		<style
+			name="scale_main"
+			width="141"
+			height="141"
+			arc_width="0"
+			text_font="font_heading"
+			text_color="#COLOR_GREEN"
+		/>
+		<style name="scale_main_dark" text_color="#COLOR_GREEN_DARK" text_font="font_small" />
+		<style name="scale_label_default" text_font="font_heading" text_color="#COLOR_WHITE" />
+	</styles>
+
+	<view
+		extends="lv_scale"
+		major_tick_every="2"
+		mode="round_inner"
+		angle_range="220"
+		min_value="0"
+		max_value="200"
+		rotation="-200"
+		width="380"
+		height="380"
+		style_arc_width="2"
+		style_radius="42"
+		style_align="center"
+		style_radial_offset="32"
+		style_text_color="#COLOR_WHITE"
+		style_text_align="auto"
+		style_line_dash_width="14"
+		draw_ticks_on_top="true"
+		total_tick_count="21"
+		scrollable="false"
+	>
+		<style name="scale_main" />
+		<bind_style name="scale_main_dark" subject="dark_theme" ref_value="1" />
+		<style name="scale_ticks" selector="items" />
+		<style name="scale_ticks" selector="indicator" />
+		<style name="scale_label_default" selector="indicator" />
+
+		<bind_style name="scale_ticks_dark" subject="dark_theme" ref_value="1" selector="items" />
+		<bind_style name="scale_ticks_dark" subject="dark_theme" ref_value="1" selector="indicator" />
+
+		<lv_scale-section
+			min_value="0"
+			bind_max_value="$value"
+			style_items="scale_section_ticks"
+			style_indicator="scale_section_ticks"
+		/>
+	</view>
+</component>

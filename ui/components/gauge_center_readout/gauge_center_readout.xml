@@ -1,0 +1,27 @@
+<component>
+	<previews>
+		<preview width="200" height="100" style_bg_color="#COLOR_BG" />
+	</previews>
+
+	<api>
+		<prop name="value" type="subject" default="speed_kmh" />
+		<prop name="unit" type="string" default="km/h" />
+		<prop name="fmt" type="string" default="%d" />
+		<prop name="value_y" type="int" default="-11" />
+		<prop name="unit_y" type="int" default="30" />
+	</api>
+
+	<styles>
+		<style name="value_text" text_font="font_display" text_color="#COLOR_TEXT_HI" />
+		<style name="unit_text" text_font="font_body" text_color="#COLOR_TEXT_MID" />
+	</styles>
+
+	<view width="200" height="100" style_bg_opa="0" style_border_width="0" scrollable="false">
+		<lv_label bind_text="$value" bind_text-fmt="$fmt" align="center" y="$value_y">
+			<style name="value_text" />
+		</lv_label>
+		<lv_label text="$unit" align="center" y="$unit_y">
+			<style name="unit_text" />
+		</lv_label>
+	</view>
+</component>

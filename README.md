@@ -35,19 +35,17 @@ Enable GitHub Pages in **Settings → Pages → Source: GitHub Actions** before 
 ## Project structure
 
 ```
-lvgl_editor/
-├── ui/                         ← working LVGL UI project
+ev-dash-ui/
+├── ui/
 │   ├── project.xml             ← display size (1024×600), LVGL version
-│   ├── globals.xml             ← fonts, colours, data subjects (live data)
-│   ├── screens/                ← one .xml file per screen
-│   ├── components/             ← reusable component .xml files
-│   ├── fonts/                  ← font source files (TTF) — generated .c goes here
-│   ├── images/                 ← image assets
-│   ├── widgets/                ← custom widget folders
-│   ├── CMakeLists.txt          ← generated — links ui as lib-ui for ESP-IDF
-│   └── user_config.cmake       ← add hand-written .c sources here
-└── .github/workflows/
-    └── preview.yml             ← build & deploy workflow
+│   ├── globals.xml             ← fonts, colours, subjects
+│   ├── screens/
+│   ├── components/
+│   ├── fonts/                  ← JetBrainsMono-Medium.ttf, Regular.ttf + generated bin fonts
+│   ├── images/
+│   ├── user_code/              ← speedometer_needle.c (speed → needle angle)
+│   └── user_config.cmake
+└── .github/workflows/preview.yml
 ```
 
 ---
@@ -91,13 +89,13 @@ target_link_libraries(${COMPONENT_LIB} PRIVATE lib-ui)
 Initialise the UI after `lv_init()` and display setup:
 
 ```c
-#include "ui_ev_dash.h"
+#include "ev_dash.h"
 
 void app_main(void)
 {
     /* ... display driver init, lv_init(), lv_display_create() ... */
 
-    ui_ev_dash_init(NULL);          /* NULL = assets embedded as C arrays */
+    ev_dash_init(NULL);   /* NULL = assets embedded as C arrays */
 
     while (1) {
         lv_timer_handler();
@@ -109,12 +107,11 @@ void app_main(void)
 Update live data from any task via the subject API:
 
 ```c
-#include "ui_ev_dash_gen.h"
+#include "ev_dash_gen.h"
 
-/* Example: CAN RX task updating speed and SoC */
-lv_subject_set_int(&subject_speed_kmh, can_data.speed);
-lv_subject_set_int(&subject_state_of_charge_pct, can_data.soc);
-lv_subject_set_float(&subject_power_kw, can_data.power_kw);
+lv_subject_set_int(&speed_kmh, can_data.speed);
+lv_subject_set_int(&state_of_charge_pct, can_data.soc);
+lv_subject_set_float(&power_kw, can_data.power_kw);
 ```
 
 ---

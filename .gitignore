@@ -1,6 +1,70 @@
+# --- OS ---
 .DS_Store
-***/*project_local.xml
+Thumbs.db
+Desktop.ini
+
+# --- Editors / IDE ---
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+!.cursor/rules/
+!.cursor/rules/**
+
+# --- Python (image tools, ESP-IDF venv references) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.Python
+
+# --- Logs & temp ---
 **/*.log
+*.tmp
+*.temp
+
+# --- LVGL Editor (ui/) ---
+**/*project_local.xml
 **/preview-build/
-**/preview-bin/.hash
-**/__pycache__/**
+**/preview-bin/
+**/.cache.json
+
+# --- Generated dial/needle embeds (regenerate: tools/gen_image_data_lvgl.ps1) ---
+ui/images/dial_speed_dial_data.c
+ui/images/dial_speed_needle_data.c
+ui/images/ev_dash_assets.h
+ui/images/sc_dial_speed_*_data.c
+
+# --- Debug / pipeline intermediates (regenerate: tools/gen_debug_draw_test.ps1) ---
+ui/images/_debug_*
+ui/images/_lvgl_conv_out/
+ui/images/debug_img_*.png
+ui/images/debug_img_*_data.c
+
+# --- ESP-IDF (firmware/) ---
+firmware/build/
+firmware/managed_components/
+firmware/dependencies.lock
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/.sdkconfig.*
+
+# Local sdkconfig fragments (keep sdkconfig.defaults tracked)
+firmware/sdkconfig.ci
+firmware/sdkconfig.user
+
+# Scratch / one-off compiler tests
+firmware/_gcc_test*
+firmware/*.o
+
+# --- Bundled tool archives (download locally if needed) ---
+lvgl-cli.zip
+*.zip
+!ui/fonts/*.zip
+
+# --- Misc local ---
+.tmp-esp-dev-kits/
