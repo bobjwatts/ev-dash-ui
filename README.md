@@ -263,54 +263,14 @@ Needle is embedded at native size (23×191). Dial face + border are baked into a
 
 ---
 
-## Known issue — large bitmap draw on ESP32-P4
-
-We are actively debugging a **device-only rendering bug** affecting large `lv_image` bitmaps on the P4 + EK79007 panel. Small images and vector widgets render correctly.
-
-### Symptoms
-
-- **439×439 dial** bitmap appears ~2× oversized, off-centre, and clipped (red debug corner visible at top-left of art).
-- **Needle** (23×191), **vector debug rings** (magenta 439, orange 409, green 380), and **scale rings** draw at the correct size and position.
-- Serial logs confirm widget coords are correct (`dial img` ≈ 439×439, `scale=256`).
-
-### What we ruled out
-
-| Hypothesis | Result |
-|---|---|
-| Stale firmware / wrong embed linked | Clean builds; serial confirms correct `data_size` and dimensions |
-| Custom embed script truncation | Byte counts match official converter; PC composite is centred |
-| PNG artwork / transparency | Solid 439×439 **cyan RGB565** test image shows same striping |
-| Colour format alone | RGB565, RGB565A8, ARGB8888 — same broken appearance |
-| Runtime image scaling | Removed from XML; `speedometer_image_set_1to1()` enforces scale 256 |
-| Widget layout | `lv_obj` bounds match 439×439 in `speedometer_debug_log_dial_layout()` |
-
-### Isolation tests
-
-| Test image | Size | Format | On-device result |
-|---|---|---|---|
-| `debug_img_100` | 100×100 | RGB565A8 | ✅ Correct |
-| `debug_img_439` | 439×439 | RGB565A8 | ❌ Striped / oversized |
-| `debug_img_439_rgb565` | 439×439 | RGB565 | ❌ Same as above |
-| Solid cyan (no art) | 439×439 | RGB565 | ❌ Same — **not an art bug** |
-
-**Conclusion:** Bug is in the **large (~439 px) RGB565/RGB565A8 image draw path** on ESP32-P4 (LVGL SW draw and/or `esp_lvgl_port` flush with avoid-tear + DSI), not in asset generation or layout.
-
-### Debug flags (`ui/user_code/speedometer_assets.h`)
+## Debug flags (`ui/user_code/speedometer_assets.h`)
 
 | Flag | Default | Purpose |
 |---|---|---|
-| `SPEEDOMETER_DEBUG_SIZE_RINGS` | `1` | Vector rings overlaid on dial for size reference |
+| `SPEEDOMETER_DEBUG_SIZE_RINGS` | `0` | Vector rings overlaid on dial for size reference |
 | `SPEEDOMETER_DEBUG_SIMPLE_CENTER` | `1` | Single centred speedometer (no side panel) |
-| `SPEEDOMETER_DEBUG_DIAL_SOLID` | `1` | Swap dial art for solid cyan 439×439 RGB565 |
+| `SPEEDOMETER_DEBUG_DIAL_SOLID` | `0` | Swap dial art for solid cyan 439×439 RGB565 |
 | `SPEEDOMETER_DEBUG_HIDE_READOUT` | `0` | Hide centre speed readout |
-
-Set flags to `0` and rebuild once a workaround lands.
-
-### Likely next steps
-
-1. **Tile workaround** — render dial as a grid of ≤100 px (or ~220 px) RGB565 tiles (100×100 images work on device).
-2. **Display path experiments** — `buff_dma=false` in `main.c`; try `CONFIG_BSP_DISPLAY_LVGL_FULL_REFRESH=n` in `sdkconfig.defaults`.
-3. **LVGL / port investigation** — large blits in `lv_draw_sw_img.c`, `esp_lvgl_port_disp.c` flush path on RISC-V P4.
 
 ---
 

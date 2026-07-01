@@ -2,9 +2,9 @@
 # Composite PNG is built first via gen_image_data.ps1 (_debug_dial_full.png at native 439).
 param(
     [string]$UiRoot = (Join-Path $PSScriptRoot "..\ui"),
-    [switch]$DialDebugRedBg = $true,
+    [switch]$DialDebugRedBg,
     [ValidateSet("RGB565", "RGB565A8")]
-    [string]$DialCf = "RGB565"
+    [string]$DialCf = "RGB565A8"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,7 +38,7 @@ if (-not (Test-Path $LvglImagePy)) {
     throw "LVGLImage.py not found at $LvglImagePy - run idf.py build once to fetch lvgl component."
 }
 
-& $Python -m pip install pypng lz4 -q 2>$null
+try { & $Python -m pip install pypng lz4 -q --disable-pip-version-check *>$null } catch {}
 
 Write-Host "Step 1: build composite dial PNG (439x439) via gen_image_data.ps1 ..."
 $genArgs = @{
@@ -54,7 +54,6 @@ if (-not (Test-Path $dialPng)) {
     throw "Missing $dialPng - composite step failed."
 }
 
-$bg = if ($DialDebugRedBg) { "0xFF0000" } else { "0x1F1F24" }
 $cfTag = $DialCf.ToLower()
 $suffix = if ($DialDebugRedBg) { "lvgl-439-$cfTag-redbg-debug" } else { "lvgl-439-$cfTag" }
 
@@ -63,13 +62,22 @@ if (Test-Path $outDir) { Remove-Item $outDir -Recurse -Force }
 New-Item -ItemType Directory -Path $outDir | Out-Null
 
 Write-Host ""
-Write-Host "Step 2: LVGLImage.py dial ($DialCf, background $bg) ..."
-& $Python $LvglImagePy `
-    --ofmt=C --cf=$DialCf --compress=NONE `
-    --background=$bg `
-    -o $outDir `
-    --name=dial_speed_dial_data `
-    $dialPng -v
+if ($DialDebugRedBg) {
+    Write-Host "Step 2: LVGLImage.py dial ($DialCf, background 0xFF0000) ..."
+    & $Python $LvglImagePy `
+        --ofmt=C --cf=$DialCf --compress=NONE `
+        --background=0xFF0000 `
+        -o $outDir `
+        --name=dial_speed_dial_data `
+        $dialPng -v
+} else {
+    Write-Host "Step 2: LVGLImage.py dial ($DialCf, transparent) ..."
+    & $Python $LvglImagePy `
+        --ofmt=C --cf=$DialCf --compress=NONE `
+        -o $outDir `
+        --name=dial_speed_dial_data `
+        $dialPng -v
+}
 
 Write-Host "Step 2: LVGLImage.py needle (RGB565A8) ..."
 & $Python $LvglImagePy `

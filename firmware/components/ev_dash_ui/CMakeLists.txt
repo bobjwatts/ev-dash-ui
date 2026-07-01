@@ -17,6 +17,7 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/images/debug_img_439_data.c
     ${UI_DIR}/images/debug_img_439_rgb565_data.c
     ${UI_DIR}/screens/screen_main_gen.c
+    ${UI_DIR}/user_code/lvgl_compat.c
     ${UI_DIR}/user_code/speedometer_assets.c
     ${UI_DIR}/user_code/speedometer_needle.c)
 

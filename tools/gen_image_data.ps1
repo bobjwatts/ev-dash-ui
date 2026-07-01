@@ -4,8 +4,8 @@
 #   sc_dial_speed_needle.png       native   -> dial_speed_needle (RGB565A8)
 param(
     [string]$UiRoot = (Join-Path $PSScriptRoot "..\ui"),
-    # Bright red flatten background shows exact bitmap bounds on the LCD.
-    [switch]$DialDebugRedBg = $true,
+    # Use a bright red background instead of transparent (shows exact bitmap bounds on LCD).
+    [switch]$DialDebugRedBg,
     # Embed at half native; P4 LVGL draws ~2x so 220px embed ≈ 440px on screen in a 439 widget.
     [int]$DialEmbedPx = 220
 )
@@ -251,10 +251,11 @@ function Write-CompositeDialC {
         [string]$Symbol,
         [string]$DebugDir,
         [int]$EmbedPx,
+        [switch]$Transparent,
         [int]$FlattenBgR = 0x1F,
         [int]$FlattenBgG = 0x1F,
         [int]$FlattenBgB = 0x24,
-        [string]$FlattenBgLabel = "COLOR_BG"
+        [string]$FlattenBgLabel = "transparent"
     )
 
     $faceSrc = [System.Drawing.Bitmap]::FromFile($FacePng)
@@ -265,12 +266,19 @@ function Write-CompositeDialC {
         $h = [Math]::Max($faceSrc.Height, $borderSrc.Height)
 
         $canvas = New-Object System.Drawing.Bitmap $w, $h, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        # Match canvas DPI to source so pixel coordinates are never silently scaled.
+        $canvas.SetResolution($faceSrc.HorizontalResolution, $faceSrc.VerticalResolution)
         $g = [System.Drawing.Graphics]::FromImage($canvas)
         try {
             $g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
-            $g.Clear([System.Drawing.Color]::FromArgb(255, $FlattenBgR, $FlattenBgG, $FlattenBgB))
-            $g.DrawImage($faceSrc, ($w - $faceSrc.Width) / 2, ($h - $faceSrc.Height) / 2)
-            $g.DrawImage($borderSrc, ($w - $borderSrc.Width) / 2, ($h - $borderSrc.Height) / 2)
+            if ($Transparent) {
+                $g.Clear([System.Drawing.Color]::Transparent)
+            } else {
+                $g.Clear([System.Drawing.Color]::FromArgb(255, $FlattenBgR, $FlattenBgG, $FlattenBgB))
+            }
+            # DrawImageUnscaled forces 1:1 pixel mapping regardless of DPI metadata.
+            $g.DrawImageUnscaled($faceSrc,   [int](($w - $faceSrc.Width)   / 2), [int](($h - $faceSrc.Height)   / 2))
+            $g.DrawImageUnscaled($borderSrc, [int](($w - $borderSrc.Width) / 2), [int](($h - $borderSrc.Height) / 2))
         }
         finally {
             $g.Dispose()
@@ -337,32 +345,33 @@ $facePng = Join-Path $UiRoot "images\sc_dial_speed_face.png"
 $borderPng = Join-Path $UiRoot "images\sc_dial_speed_face_border.png"
 $needlePng = Join-Path $UiRoot "images\sc_dial_speed_needle.png"
 
-$dialFlattenBgR = 0x1F
-$dialFlattenBgG = 0x1F
-$dialFlattenBgB = 0x24
-$dialFlattenBgLabel = "COLOR_BG"
 $dialAssetsSuffix = "${DialEmbedPx}embed-439disp-rgb565a8"
 if ($DialDebugRedBg) {
-    $dialFlattenBgR = 0xFF
-    $dialFlattenBgG = 0x00
-    $dialFlattenBgB = 0x00
-    $dialFlattenBgLabel = "bright red (bounds debug)"
     $dialAssetsSuffix = "${DialEmbedPx}embed-439disp-rgb565a8-redbg-debug"
     Write-Host "Dial flatten background: bright red (bounds debug)"
+} else {
+    Write-Host "Dial flatten background: transparent"
 }
 Write-Host "Dial embed: ${DialEmbedPx}px -> on-screen 439px (P4 draw workaround)"
 
-$dialSizes = Write-CompositeDialC `
-    -FacePng $facePng `
-    -BorderPng $borderPng `
-    -OutPath (Join-Path $UiRoot "images\dial_speed_dial_data.c") `
-    -Symbol "dial_speed_dial_data" `
-    -DebugDir (Join-Path $UiRoot "images") `
-    -EmbedPx $DialEmbedPx `
-    -FlattenBgR $dialFlattenBgR `
-    -FlattenBgG $dialFlattenBgG `
-    -FlattenBgB $dialFlattenBgB `
-    -FlattenBgLabel $dialFlattenBgLabel
+$compositeArgs = @{
+    FacePng   = $facePng
+    BorderPng = $borderPng
+    OutPath   = (Join-Path $UiRoot "images\dial_speed_dial_data.c")
+    Symbol    = "dial_speed_dial_data"
+    DebugDir  = (Join-Path $UiRoot "images")
+    EmbedPx   = $DialEmbedPx
+}
+if ($DialDebugRedBg) {
+    $compositeArgs.FlattenBgR     = 0xFF
+    $compositeArgs.FlattenBgG     = 0x00
+    $compositeArgs.FlattenBgB     = 0x00
+    $compositeArgs.FlattenBgLabel = "bright red (bounds debug)"
+} else {
+    $compositeArgs.Transparent = $true
+}
+
+$dialSizes = Write-CompositeDialC @compositeArgs
 
 Write-LvglImageC `
     -PngPath $needlePng `

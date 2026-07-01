@@ -41,6 +41,7 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
     lv_obj_set_height(lv_obj_0, 439);
     lv_obj_set_style_bg_opa(lv_obj_0, 0, 0);
     lv_obj_set_style_border_width(lv_obj_0, 0, 0);
+    lv_obj_set_style_pad_all(lv_obj_0, 0, 0);
     lv_obj_set_flag(lv_obj_0, LV_OBJ_FLAG_SCROLLABLE, false);
     lv_obj_add_flag(lv_obj_0, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
@@ -65,7 +66,7 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
     lv_image_set_src(lv_image_1, dial_speed_needle);
     speedometer_image_set_1to1(lv_image_1, (const lv_image_dsc_t *)dial_speed_needle, "needle");
     lv_obj_set_align(lv_image_1, LV_ALIGN_TOP_MID);
-    lv_obj_set_y(lv_image_1, 35);
+    lv_obj_set_y(lv_image_1, 28);
     speedometer_needle_set_pivot(lv_image_1, (const lv_image_dsc_t *)dial_speed_needle);
     lv_obj_set_style_bg_opa(lv_image_1, 0, 0);
     lv_obj_bind_style_prop(lv_image_1, LV_STYLE_TRANSFORM_ROTATION, 0, needle_angle);

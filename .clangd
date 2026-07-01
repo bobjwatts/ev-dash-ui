@@ -1,0 +1,12 @@
+CompileFlags:
+  CompilationDatabase: firmware/build
+  Remove:
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+    - -fzero-init-padding-bits=*
+    - -fno-malloc-dce
+    - -mfix-esp32-psram-cache-issue
+    - -mfix-esp32-psram-cache-strategy=*
+    - -march=*
+  Add:
+    - -march=rv32imac

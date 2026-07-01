@@ -16,7 +16,7 @@ if (-not (Test-Path $LvglImagePy)) {
     throw "LVGLImage.py not found - run idf.py build once"
 }
 
-& $Python -m pip install pypng lz4 pillow -q 2>$null
+try { & $Python -m pip install pypng lz4 pillow -q --disable-pip-version-check *>$null } catch {}
 
 $imgDir = Join-Path $UiRoot "images"
 $outDir = Join-Path $imgDir "_lvgl_conv_out"

@@ -11,11 +11,11 @@
 #define SPEEDOMETER_ARC_TRACK_PX           380
 #define SPEEDOMETER_NEEDLE_DISPLAY_W     23
 #define SPEEDOMETER_NEEDLE_DISPLAY_H     191
-#define SPEEDOMETER_NEEDLE_PIVOT_BOTTOM  38
+#define SPEEDOMETER_NEEDLE_PIVOT_BOTTOM  0
 
 /* Overlay concentric vector rings on screen_main to compare PNG scale on device. */
 #ifndef SPEEDOMETER_DEBUG_SIZE_RINGS
-#define SPEEDOMETER_DEBUG_SIZE_RINGS     1
+#define SPEEDOMETER_DEBUG_SIZE_RINGS     0
 #endif
 
 /* 1 = one centred speedometer only (no side-by-side debug panel). */
@@ -25,7 +25,7 @@
 
 /* 1 = replace dial art with solid 439x439 RGB565 (tools/gen_debug_draw_test.ps1). */
 #ifndef SPEEDOMETER_DEBUG_DIAL_SOLID
-#define SPEEDOMETER_DEBUG_DIAL_SOLID     1
+#define SPEEDOMETER_DEBUG_DIAL_SOLID     0
 #endif
 
 #ifndef SPEEDOMETER_DEBUG_HIDE_READOUT
