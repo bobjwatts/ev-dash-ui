@@ -33,9 +33,10 @@ venv/
 **/preview-bin/
 **/.cache.json
 
-# --- Generated dial/needle embeds (regenerate: tools/gen_image_data_lvgl.ps1) ---
+# --- Generated dial/needle/mask embeds (regenerate: tools/gen_image_data_lvgl.ps1) ---
 ui/images/dial_speed_dial_data.c
 ui/images/dial_speed_needle_data.c
+ui/images/dial_speed_arc_mask_data.c
 ui/images/ev_dash_assets.h
 ui/images/sc_dial_speed_*_data.c
 
@@ -47,6 +48,7 @@ ui/images/debug_img_*_data.c
 
 # --- ESP-IDF (firmware/) ---
 firmware/build/
+firmware/build_old/
 firmware/managed_components/
 firmware/dependencies.lock
 firmware/sdkconfig
@@ -62,9 +64,11 @@ firmware/_gcc_test*
 firmware/*.o
 
 # --- Bundled tool archives (download locally if needed) ---
+lvgl-cli/
 lvgl-cli.zip
 *.zip
 !ui/fonts/*.zip
 
 # --- Misc local ---
 .tmp-esp-dev-kits/
+build_output.txt
