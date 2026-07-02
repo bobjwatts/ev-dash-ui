@@ -11,8 +11,8 @@
 	<view width="439" height="439" style_bg_opa="0" style_border_width="0" scrollable="false">
 		<!-- dial_speed_dial: face+border baked from sc_* PNGs at native size (439x439) -->
 		<lv_image src="dial_speed_dial" align="center" />
-		<speed_scale_ring value="$speed" align="center" />
-		<speed_scale_ring_fine value="$speed" align="center" />
+		<!-- <speed_scale_ring value="$speed" align="center" /> -->
+		<!-- <speed_scale_ring_fine value="$speed" align="center" /> -->
 		<lv_image
 			src="dial_speed_needle"
 			align="top_mid"

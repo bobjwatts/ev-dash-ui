@@ -87,8 +87,8 @@ lv_obj_t * speed_scale_ring_create(lv_obj_t * parent, lv_subject_t * value)
     lv_scale_set_min_value(lv_scale_0, 0);
     lv_scale_set_max_value(lv_scale_0, 200);
     lv_scale_set_rotation(lv_scale_0, -200);
-    lv_obj_set_width(lv_scale_0, 380);
-    lv_obj_set_height(lv_scale_0, 380);
+    lv_obj_set_width(lv_scale_0, 360);
+    lv_obj_set_height(lv_scale_0, 360);
     lv_obj_set_style_arc_width(lv_scale_0, 2, 0);
     lv_obj_set_style_radius(lv_scale_0, 42, 0);
     lv_obj_set_style_align(lv_scale_0, LV_ALIGN_CENTER, 0);

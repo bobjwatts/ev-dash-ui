@@ -46,10 +46,12 @@ void speedometer_needle_set_pivot(lv_obj_t * needle_img, const lv_image_dsc_t * 
         return;
     }
 
+    /* Pivot X: horizontal centre of the needle image. */
     lv_obj_set_style_transform_pivot_x(needle_img, src->header.w / 2, 0);
-    lv_obj_set_style_transform_pivot_y(needle_img,
-                                       src->header.h - SPEEDOMETER_NEEDLE_PIVOT_BOTTOM,
-                                       0);
+    /* Pivot Y: SPEEDOMETER_NEEDLE_ARM_PX pixels below the image top.
+     * This may be outside the image bounds when whitespace has been
+     * trimmed from the bottom — LVGL handles out-of-bounds pivots fine. */
+    lv_obj_set_style_transform_pivot_y(needle_img, SPEEDOMETER_NEEDLE_ARM_PX, 0);
 }
 
 void speedometer_image_set_1to1(lv_obj_t * img, const lv_image_dsc_t * src, const char * label)

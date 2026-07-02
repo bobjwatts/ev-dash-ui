@@ -9,9 +9,12 @@
 #define SPEEDOMETER_DIAL_EMBED_PX        EV_DASH_DIAL_EMBED_W
 #define SPEEDOMETER_FACE_DISPLAY_PX      409
 #define SPEEDOMETER_ARC_TRACK_PX           380
-#define SPEEDOMETER_NEEDLE_DISPLAY_W     23
-#define SPEEDOMETER_NEEDLE_DISPLAY_H     191
-#define SPEEDOMETER_NEEDLE_PIVOT_BOTTOM  0
+#define SPEEDOMETER_NEEDLE_DISPLAY_W     EV_DASH_NEEDLE_W
+#define SPEEDOMETER_NEEDLE_DISPLAY_H     EV_DASH_NEEDLE_H
+/* Distance from the needle tip to the rotation centre (dial centre).
+ * This is a physical property of the needle art — update when the PNG
+ * is redrawn at a different length, NOT when whitespace is trimmed.  */
+#define SPEEDOMETER_NEEDLE_ARM_PX        191
 
 /* Overlay concentric vector rings on screen_main to compare PNG scale on device. */
 #ifndef SPEEDOMETER_DEBUG_SIZE_RINGS

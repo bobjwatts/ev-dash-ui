@@ -51,7 +51,7 @@
 		<color name="COLOR_GAUGE_TRACK" value="0x235F3F" />
 
 		<!-- Typography sizes (px) — scaled for 580 px dial on 1024×600 -->
-		<int name="FONT_SIZE_DISPLAY" value="68" />
+		<int name="FONT_SIZE_DISPLAY" value="50" />
 		<int name="FONT_SIZE_HEADING" value="28" />
 		<int name="FONT_SIZE_BODY" value="16" />
 		<int name="FONT_SIZE_SMALL" value="12" />
@@ -109,15 +109,17 @@
 	<images>
 		<!-- Firmware uses dial_speed_dial composite (tools/gen_image_data.ps1), not these entries directly -->
 		<data name="dial_speed_needle" color_format="argb8888" src_path="images/sc_dial_speed_needle.png" />
+		<!-- dial_speed_dial is the composite face+border baked by tools/gen_image_data_lvgl.ps1.
+		     The src_path here is for editor preview only; firmware uses the generated C embed. -->
 		<data
-			name="sc_dial_speed_face_border"
+			name="dial_speed_dial"
 			color_format="argb8888"
 			src_path="images/sc_dial_speed_face_border.png"
 		/>
 	</images>
 
 	<fonts>
-		<bin name="font_display" as_file="false" src_path="fonts/JetBrainsMono-Medium.ttf" size="68" bpp="4" />
+		<bin name="font_display" as_file="false" src_path="fonts/JetBrainsMono-Medium.ttf" size="50" bpp="4" />
 		<bin name="font_heading" as_file="false" src_path="fonts/JetBrainsMono-Medium.ttf" size="28" bpp="4" />
 		<bin name="font_body" as_file="false" src_path="fonts/JetBrainsMono-Regular.ttf" size="16" bpp="4" />
 		<bin name="font_small" as_file="false" src_path="fonts/JetBrainsMono-Regular.ttf" size="12" bpp="4" />

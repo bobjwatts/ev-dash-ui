@@ -1,12 +1,13 @@
-# EV Dash — LVGL UI
+﻿# EV Dash — LVGL UI
 
-LVGL 9.5 instrument-cluster UI for an **ESP32-P4** electric-vehicle dashboard.
+LVGL 9.4 instrument-cluster UI for an **ESP32-P4** electric-vehicle dashboard.
 
 | | |
 |---|---|
 | **Display** | 1024 × 600 px · EK79007AD · MIPI-DSI |
 | **Board** | [ESP32-P4-Function-EV-Board](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/user_guide.html) |
 | **Toolchain** | ESP-IDF **6.0+** (tested with 6.0.1) |
+| **LVGL** | 9.4.0 (managed component) |
 | **UI authoring** | [LVGL Pro Editor](https://pro.lvgl.io) + XML in `ui/` |
 
 ---
@@ -16,10 +17,10 @@ LVGL 9.5 instrument-cluster UI for an **ESP32-P4** electric-vehicle dashboard.
 ```
 ev-dash-ui/
 ├── ui/                          # LVGL Editor project (source of truth for screens & widgets)
-│   ├── project.xml              # Display 1024×600, LVGL 9.5, esp32p4 target
+│   ├── project.xml              # Display 1024x600, LVGL 9.4, esp32p4 target
 │   ├── globals.xml              # Fonts, colours, runtime subjects (CAN data bindings)
 │   ├── screens/                 # screen_main.xml → screen_main_gen.c
-│   ├── components/              # speedometer, speed_scale_ring, gauge_center_readout, …
+│   ├── components/              # speedometer, soc_gauge, gauge_center_readout, speed_scale_ring
 │   ├── fonts/                   # JetBrains Mono TTF + generated font_*_data.c
 │   ├── images/                  # PNG sources + generated *_data.c embeds
 │   ├── user_code/               # Hand-written C (needle callback, dial asset setup, debug)
@@ -29,17 +30,16 @@ ev-dash-ui/
 │
 ├── firmware/                    # ESP-IDF app that flashes UI to hardware
 │   ├── main/main.c              # BSP display init, ev_dash_init(), demo speed sweep
-│   ├── main/idf_component.yml   # BSP, LVGL 9.5, USB (fetched on first build)
+│   ├── main/idf_component.yml   # BSP, LVGL 9.4, USB (fetched on first build)
 │   ├── components/
 │   │   ├── ev_dash_ui/          # IDF component — lists every ui/*.c file to compile
 │   │   └── espressif__esp_lvgl_port/  # Vendored LVGL port (local patches)
 │   ├── sdkconfig.defaults       # P4, PSRAM, RGB565, tear avoidance, display options
 │   └── README.md                # Firmware-specific quick reference
 │
-├── tools/                       # Image embed & debug scripts (PowerShell)
-│   ├── gen_image_data.ps1       # Composite dial PNG + custom C embed
-│   ├── gen_image_data_lvgl.ps1  # Same composite → official LVGLImage.py converter
-│   └── gen_debug_draw_test.ps1  # Solid-colour test images for draw isolation
+├── tools/                       # Image embed scripts (PowerShell)
+│   ├── gen_image_data.ps1       # Composite dial PNG sources into a single embed-ready PNG
+│   └── gen_image_data_lvgl.ps1  # Calls gen_image_data.ps1 then LVGLImage.py → *_data.c
 │
 └── .github/workflows/preview.yml  # Validates XML & generates C on push
 ```
@@ -127,17 +127,14 @@ From the repo root:
 ```powershell
 # Requires firmware/managed_components/lvgl__lvgl (run idf.py build once first)
 .\tools\gen_image_data_lvgl.ps1
-
-# Optional: solid test images for draw debugging
-.\tools\gen_debug_draw_test.ps1
 ```
 
 This writes (gitignored locally; regenerate after clone):
 
 - `ui/images/dial_speed_dial_data.c`
 - `ui/images/dial_speed_needle_data.c`
+- `ui/images/dial_speed_arc_mask_data.c`
 - `ui/images/ev_dash_assets.h`
-- `ui/images/debug_img_*_data.c` (if debug script run)
 
 Default dial format is **RGB565** (`-DialCf RGB565|RGB565A8`).
 
@@ -245,7 +242,7 @@ lv_subject_set_float(&power_kw, can_data.power_kw);
 | `sys_state` | int | SysState enum |
 | `fault_code` | int | Active fault (0 = none) |
 
-The speedometer component binds `speed_kmh` to scale rings and `speed_needle_angle` (updated in `user_code/speedometer_needle.c`) for needle rotation.
+The speedometer component binds `speed_kmh` to the active arc, the 11 manual speed labels (which turn yellow as the needle passes), the centre readout, and the needle rotation via `speed_needle_angle` (computed in `user_code/speedometer_needle.c`). The `soc_gauge` component binds `state_of_charge_pct` (arc fill + colour) and `range_est_km` (range label).
 
 ---
 
@@ -253,13 +250,12 @@ The speedometer component binds `speed_kmh` to scale rings and `speed_needle_ang
 
 | Step | Tool | Output |
 |---|---|---|
-| Edit PNGs | — | `ui/images/sc_dial_speed_face.png`, `_border`, `_needle` |
-| Composite 439×439 dial | `gen_image_data.ps1` | `_debug_dial_full.png` (intermediate) |
-| Convert to C | `gen_image_data_lvgl.ps1` → `LVGLImage.py` | `dial_speed_dial_data.c`, `dial_speed_needle_data.c` |
+| Edit PNGs | -- | `sc_dial_speed_face.png`, `sc_dial_speed_arc_mask.png`, `sc_dial_speed_needle.png` |
+| Convert to C | `gen_image_data_lvgl.ps1` -> `LVGLImage.py` | `dial_speed_dial_data.c`, `dial_speed_needle_data.c`, `dial_speed_arc_mask_data.c` |
 | Metadata header | same script | `ev_dash_assets.h` (`EV_DASH_ASSETS_ID`, sizes, format) |
 | Runtime setup | `user_code/speedometer_assets.c` | 1:1 image scale, pivot, debug overlays |
 
-Needle is embedded at native size (23×191). Dial face + border are baked into a single 439×439 bitmap aligned to the speedometer widget.
+Needle is embedded at native size (23x191 px). Dial face is baked into a single 439x439 RGB565 bitmap. The arc mask (`dial_speed_arc_mask_data.c`, RGB565A8, 383x383) is layered over the active `lv_arc` to produce segmented tick marks.
 
 ---
 

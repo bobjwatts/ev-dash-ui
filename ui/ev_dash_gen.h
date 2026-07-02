@@ -79,7 +79,7 @@ extern "C" {
 
 #define COLOR_GAUGE_TRACK lv_color_hex(0x235F3F)
 
-#define FONT_SIZE_DISPLAY 68
+#define FONT_SIZE_DISPLAY 50
 
 #define FONT_SIZE_HEADING 28
 
@@ -142,8 +142,8 @@ extern lv_font_t * font_small;
  * Images
  *----------------*/
 
-extern const void * dial_speed_dial;
 extern const void * dial_speed_needle;
+extern const void * dial_speed_dial;
 
 /*----------------
  * Subjects
@@ -197,6 +197,7 @@ void ev_dash_init_gen(const char * asset_path);
 #include "components/speed_scale_ring/speed_scale_ring_fine_gen.h"
 #include "components/speed_scale_ring/speed_scale_ring_gen.h"
 #include "components/speedometer/speedometer_gen.h"
+#include "components/soc_gauge/soc_gauge_gen.h"
 #include "screens/screen_main_gen.h"
 
 #ifdef __cplusplus
