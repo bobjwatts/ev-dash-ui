@@ -1,0 +1,26 @@
+---
+description: Remind to commit after completing meaningful work on the EV dash UI
+alwaysApply: true
+---
+
+# Commit Reminders
+
+After completing any of the following, remind the user to commit before moving on:
+
+- A feature or component is working and verified on device
+- A build error is fixed and the build is green
+- A cleanup or refactor session ends
+- Any `*_gen.c` file is manually edited (CLI will overwrite it on next `lved-cli generate`)
+- The image asset pipeline is run (`gen_image_data_lvgl.ps1`)
+- `globals.xml` or any XML is changed and `lved-cli` is about to be run
+
+## Why it matters for this project
+
+- `lved-cli.js generate ui` overwrites all `*_gen.*` files from XML — any hand edits in those files are lost without a prior commit
+- `soc_gauge_gen.c` and `speedometer_gen.c` contain significant hand-written logic that lives in `*_gen.*` files and will be wiped by the CLI
+- The session summary only captures the previous session — changes made in the current session are not recoverable from AI memory
+
+## Reminder wording
+
+Keep it short, e.g.:
+> "Good time to commit before we move on — want me to do it?"
