@@ -124,7 +124,7 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
         char buf[5];
         lv_snprintf(buf, sizeof(buf), "%d", v);
         lv_label_set_text(lbl, buf);
-        lv_obj_set_style_text_font(lbl, font_small, 0);
+        lv_obj_set_style_text_font(lbl, font_body, 0);
         lv_obj_set_style_text_color(lbl, COLOR_WHITE, 0);
         lv_obj_align(lbl, LV_ALIGN_CENTER, x_ofs, y_ofs);
         /* user_data: bits[N:1] = threshold speed, bit[0] = current active state */
