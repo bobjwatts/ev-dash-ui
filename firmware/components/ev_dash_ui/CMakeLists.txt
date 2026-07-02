@@ -12,6 +12,7 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/fonts/font_display_data.c
     ${UI_DIR}/fonts/font_heading_data.c
     ${UI_DIR}/fonts/font_small_data.c
+    ${UI_DIR}/images/background_data.c
     ${UI_DIR}/images/dial_speed_arc_mask_data.c
     ${UI_DIR}/images/dial_speed_dial_data.c
     ${UI_DIR}/images/dial_speed_needle_data.c

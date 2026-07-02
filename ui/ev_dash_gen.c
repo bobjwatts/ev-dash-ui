@@ -60,6 +60,8 @@ const void * dial_speed_needle;
 extern const void * dial_speed_needle_data;
 const void * dial_speed_dial;
 extern const void * dial_speed_dial_data;
+const void * background;
+extern const void * background_data;
 
 /*----------------
  * Global styles
@@ -122,6 +124,7 @@ void ev_dash_init_gen(const char * asset_path)
      *----------------*/
     dial_speed_needle = &dial_speed_needle_data;
     dial_speed_dial = &dial_speed_dial_data;
+    background = &background_data;
 
     /*----------------
      * Global styles
@@ -202,6 +205,7 @@ void ev_dash_init_gen(const char * asset_path)
     /* Register images */
     lv_xml_register_image(NULL, "dial_speed_needle", dial_speed_needle);
     lv_xml_register_image(NULL, "dial_speed_dial", dial_speed_dial);
+    lv_xml_register_image(NULL, "background", background);
 #endif
 
 #if LV_USE_XML == 0

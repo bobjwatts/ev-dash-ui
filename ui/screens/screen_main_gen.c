@@ -53,6 +53,14 @@ lv_obj_t * screen_main_create(void)
     lv_obj_set_style_bg_color(lv_obj_0, COLOR_BG, 0);
     lv_obj_set_flag(lv_obj_0, LV_OBJ_FLAG_SCROLLABLE, false);
 
+    /* Full-screen background image — rendered first so it sits below all widgets. */
+    lv_obj_t * bg_img = lv_image_create(lv_obj_0);
+    lv_image_set_src(bg_img, background);
+    lv_obj_set_size(bg_img, 1024, 600);
+    lv_obj_set_pos(bg_img, 0, 0);
+    lv_obj_remove_flag(bg_img, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(bg_img, LV_OBJ_FLAG_IGNORE_LAYOUT);
+
     lv_obj_t * speedometer_0 = speedometer_create(lv_obj_0, &speed_kmh, &speed_needle_angle);
     lv_obj_set_style_align(speedometer_0, LV_ALIGN_CENTER, 0);
 

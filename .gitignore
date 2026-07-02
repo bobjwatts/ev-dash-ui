@@ -33,7 +33,8 @@ venv/
 **/preview-bin/
 **/.cache.json
 
-# --- Generated dial/needle/mask embeds (regenerate: tools/gen_image_data_lvgl.ps1) ---
+# --- Generated image embeds (regenerate: tools/gen_image_data_lvgl.ps1) ---
+ui/images/background_data.c
 ui/images/dial_speed_dial_data.c
 ui/images/dial_speed_needle_data.c
 ui/images/dial_speed_arc_mask_data.c

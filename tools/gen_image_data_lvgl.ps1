@@ -43,6 +43,7 @@ try { & $Python -m pip install pypng lz4 -q --disable-pip-version-check *>$null 
 $dialPng   = Join-Path $UiRoot "images\sc_dial_speed_face.png"
 $needlePng = Join-Path $UiRoot "images\sc_dial_speed_needle.png"
 $maskPng   = Join-Path $UiRoot "images\sc_dial_speed_arc_mask.png"
+$bgPng     = Join-Path $UiRoot "images\background.png"
 
 foreach ($f in @($dialPng, $needlePng, $maskPng)) {
     if (-not (Test-Path $f)) { throw "Missing source PNG: $f" }
@@ -84,14 +85,29 @@ Write-Host "Step 3: LVGLImage.py arc mask (RGB565A8) ..."
     -o $outDir --name=dial_speed_arc_mask_data `
     $maskPng -v
 
+# ── Convert background (optional — skip if not present) ───────────────────────
+if (Test-Path $bgPng) {
+    Write-Host "Step 4: LVGLImage.py background (RGB565, dithered) ..."
+    & $Python $LvglImagePy `
+        --ofmt=C --cf=RGB565 --compress=NONE --rgb565dither `
+        --background=0x1F1F24 `
+        -o $outDir --name=background_data `
+        $bgPng -v
+}
+
 # ── Install outputs ───────────────────────────────────────────────────────────
 $imgDir = Join-Path $UiRoot "images"
 Copy-Item (Join-Path $outDir "dial_speed_dial_data.c")     (Join-Path $imgDir "dial_speed_dial_data.c")     -Force
 Copy-Item (Join-Path $outDir "dial_speed_needle_data.c")   (Join-Path $imgDir "dial_speed_needle_data.c")   -Force
 Copy-Item (Join-Path $outDir "dial_speed_arc_mask_data.c") (Join-Path $imgDir "dial_speed_arc_mask_data.c") -Force
+if (Test-Path $bgPng) {
+    Copy-Item (Join-Path $outDir "background_data.c") (Join-Path $imgDir "background_data.c") -Force
+}
 Remove-Item $outDir -Recurse -Force
 
-Write-Host "Installed dial_speed_dial_data.c, dial_speed_needle_data.c, dial_speed_arc_mask_data.c"
+$installed = "dial_speed_dial_data.c, dial_speed_needle_data.c, dial_speed_arc_mask_data.c"
+if (Test-Path $bgPng) { $installed += ", background_data.c" }
+Write-Host "Installed $installed"
 
 # ── Read dimensions for assets header ─────────────────────────────────────────
 Add-Type -AssemblyName System.Drawing

@@ -13,6 +13,7 @@ list(
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_display_data.c
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_heading_data.c
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_small_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/images/background_data.c
   ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_arc_mask_data.c
   ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_dial_data.c
   ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_needle_data.c

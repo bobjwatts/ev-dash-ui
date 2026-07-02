@@ -144,6 +144,7 @@ extern lv_font_t * font_small;
 
 extern const void * dial_speed_needle;
 extern const void * dial_speed_dial;
+extern const void * background;
 
 /*----------------
  * Subjects
