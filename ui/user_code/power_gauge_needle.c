@@ -9,8 +9,8 @@
 /* Arc: 120° (−160 kW) → 270° (0 kW) → 60° (+160 kW), 300° total sweep.
  * Needle rotation 0 = 12 o'clock. At 0 kW → arc angle 270° → rotation = 0°.
  * At ±160 kW → ±150° = ±1500 decideg.                                       */
-#define POWER_ANGLE_MIN_DECIDEG   (-1500)
-#define POWER_ANGLE_MAX_DECIDEG   1500
+#define POWER_ANGLE_MIN_DECIDEG   (-1100)
+#define POWER_ANGLE_MAX_DECIDEG   1100
 #define POWER_KW_MIN              (-160.0f)
 #define POWER_KW_MAX              160.0f
 

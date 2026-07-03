@@ -39,15 +39,25 @@
 #define POWER_GAUGE_H             264
 #define POWER_GAUGE_CENTER        132   /* POWER_GAUGE_W / 2 */
 
-/* Arc */
+/* Arc — angles chosen to match needle sweep of ±110° from 12 o'clock.
+ * LVGL 0°=3 o'clock, CW. 12 o'clock = 270°.
+ * −110° from top → 270°−110°=160°  (kW_min, lower-left)
+ * +110° from top → 270°+110°=380°→20° (kW_max, lower-right)
+ * Total sweep: 220° */
 #define POWER_ARC_SIZE            210   /* slightly inside the 214 px mask */
 #define POWER_ARC_WIDTH           15
-#define POWER_ARC_BG_START        120   /* degrees at kW_min (−160 kW) */
-#define POWER_ARC_BG_END          60    /* degrees at kW_max (+160 kW)  */
+#define POWER_ARC_BG_START        160   /* degrees at kW_min (−160 kW) */
+#define POWER_ARC_BG_END          20    /* degrees at kW_max (+160 kW)  */
+#define POWER_ARC_SWEEP           220   /* total degrees across full kW range */
 
 /* Needle */
 #define POWER_GAUGE_NEEDLE_W      10
-#define POWER_GAUGE_NEEDLE_ARM_PX 68    /* image height = tip-to-pivot = no whitespace below */
+#define POWER_GAUGE_NEEDLE_H      68    /* actual image pixel height (tip to image bottom) */
+/* Distance from needle tip to the rotation pivot (dial centre).
+ * Larger than POWER_GAUGE_NEEDLE_H so the pivot lies outside (below) the image,
+ * leaving a gap between the needle base and the dial centre — same technique as
+ * the speedometer where ARM_PX=191 > image_h=123. */
+#define POWER_GAUGE_NEEDLE_ARM_PX 105   /* ~80% of dial radius (132 px) */
 
 /* Scale labels — radius from container centre */
 #define POWER_LABEL_RADIUS        88
@@ -117,7 +127,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_set_style_bg_opa(bg_arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_outline_width(bg_arc, 0, LV_PART_KNOB);
     lv_obj_set_style_pad_all(bg_arc, 0, LV_PART_KNOB);
-    lv_arc_set_bg_angles(bg_arc, POWER_ARC_BG_START, POWER_ARC_BG_END);
+    lv_arc_set_bg_angles(bg_arc, POWER_ARC_BG_START, POWER_ARC_BG_END);   /* 160°→20°, 220° sweep */
     lv_arc_set_range(bg_arc, 0, 1);
     lv_arc_set_value(bg_arc, 0);
 
@@ -136,7 +146,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_set_style_bg_opa(yellow_arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_outline_width(yellow_arc, 0, LV_PART_KNOB);
     lv_obj_set_style_pad_all(yellow_arc, 0, LV_PART_KNOB);
-    lv_arc_set_bg_angles(yellow_arc, 270, 60);       /* right half: top → lower-right */
+    lv_arc_set_bg_angles(yellow_arc, 270, 20);        /* right half: top → lower-right (110°) */
     lv_arc_set_range(yellow_arc, 0, POWER_KW_MAX);
     lv_arc_set_value(yellow_arc, 0);
     lv_obj_set_user_data(yellow_arc, (void *)(uintptr_t)0);   /* 0 = power side */
@@ -157,7 +167,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_set_style_bg_opa(green_arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_outline_width(green_arc, 0, LV_PART_KNOB);
     lv_obj_set_style_pad_all(green_arc, 0, LV_PART_KNOB);
-    lv_arc_set_bg_angles(green_arc, 120, 270);       /* left half: lower-left → top */
+    lv_arc_set_bg_angles(green_arc, 160, 270);        /* left half: lower-left → top (110°) */
     lv_arc_set_mode(green_arc, LV_ARC_MODE_REVERSE); /* fills from top toward lower-left */
     lv_arc_set_range(green_arc, 0, -POWER_KW_MIN);   /* 0..160 */
     lv_arc_set_value(green_arc, 0);
@@ -177,9 +187,9 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
 
     for(int i = 0; i < POWER_LABEL_COUNT; i++) {
         int v = power_label_vals[i];
-        /* angle = POWER_ARC_BG_START + (v - KW_MIN) * (300 / (KW_MAX - KW_MIN)) */
+        /* angle = POWER_ARC_BG_START + (v - KW_MIN) / (KW_MAX - KW_MIN) * SWEEP */
         float angle_deg = (float)POWER_ARC_BG_START +
-                          ((float)(v - POWER_KW_MIN) / (float)(POWER_KW_MAX - POWER_KW_MIN)) * 300.0f;
+                          ((float)(v - POWER_KW_MIN) / (float)(POWER_KW_MAX - POWER_KW_MIN)) * (float)POWER_ARC_SWEEP;
         float angle_rad = angle_deg * (3.14159265f / 180.0f);
         int32_t x_ofs = (int32_t)(cosf(angle_rad) * (float)POWER_LABEL_RADIUS);
         int32_t y_ofs = (int32_t)(sinf(angle_rad) * (float)POWER_LABEL_RADIUS);
@@ -198,9 +208,10 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     extern const lv_image_dsc_t small_dial_needle_green_data;
     lv_obj_t * needle_img = lv_image_create(cont);
     lv_image_set_src(needle_img, &small_dial_needle_yellow_data);
-    /* Match speedometer_image_set_1to1: explicit size + inner-align + 1:1 scale */
+    /* Match speedometer_image_set_1to1: explicit size + inner-align + 1:1 scale.
+     * Object sized to the actual image pixels; pivot is set independently below. */
     lv_image_set_inner_align(needle_img, LV_IMAGE_ALIGN_CENTER);
-    lv_obj_set_size(needle_img, POWER_GAUGE_NEEDLE_W, POWER_GAUGE_NEEDLE_ARM_PX);
+    lv_obj_set_size(needle_img, POWER_GAUGE_NEEDLE_W, POWER_GAUGE_NEEDLE_H);
     lv_image_set_scale(needle_img, LV_SCALE_NONE);
     lv_obj_set_align(needle_img, LV_ALIGN_TOP_MID);
     lv_obj_set_y(needle_img, POWER_GAUGE_CENTER - POWER_GAUGE_NEEDLE_ARM_PX);
