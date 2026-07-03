@@ -198,11 +198,16 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     extern const lv_image_dsc_t small_dial_needle_green_data;
     lv_obj_t * needle_img = lv_image_create(cont);
     lv_image_set_src(needle_img, &small_dial_needle_yellow_data);
+    /* Match speedometer_image_set_1to1: explicit size + inner-align + 1:1 scale */
+    lv_image_set_inner_align(needle_img, LV_IMAGE_ALIGN_CENTER);
+    lv_obj_set_size(needle_img, POWER_GAUGE_NEEDLE_W, POWER_GAUGE_NEEDLE_ARM_PX);
     lv_image_set_scale(needle_img, LV_SCALE_NONE);
     lv_obj_set_align(needle_img, LV_ALIGN_TOP_MID);
     lv_obj_set_y(needle_img, POWER_GAUGE_CENTER - POWER_GAUGE_NEEDLE_ARM_PX);
-    /* Pivot at image bottom = dial centre. Needle has no transparent whitespace below pivot. */
-    lv_image_set_pivot(needle_img, POWER_GAUGE_NEEDLE_W / 2, POWER_GAUGE_NEEDLE_ARM_PX);
+    /* Style transform pivot — same pattern as speedometer_needle_set_pivot.
+     * LV_STYLE_TRANSFORM_ROTATION uses these style props, NOT lv_image_set_pivot. */
+    lv_obj_set_style_transform_pivot_x(needle_img, POWER_GAUGE_NEEDLE_W / 2, 0);
+    lv_obj_set_style_transform_pivot_y(needle_img, POWER_GAUGE_NEEDLE_ARM_PX, 0);
     lv_obj_set_style_bg_opa(needle_img, LV_OPA_TRANSP, 0);
     lv_obj_bind_style_prop(needle_img, LV_STYLE_TRANSFORM_ROTATION, 0, needle_angle);
     lv_subject_add_observer_obj(power_kw, power_needle_color_cb, needle_img, NULL);
@@ -305,8 +310,10 @@ static void power_needle_color_cb(lv_observer_t * observer, lv_subject_t * subje
     extern const lv_image_dsc_t small_dial_needle_green_data;
     extern const lv_image_dsc_t small_dial_needle_yellow_data;
     float kw = lv_subject_get_float(subject);
-    lv_image_set_src(needle, (kw < 0.0f) ? (const void *)&small_dial_needle_green_data
-                                          : (const void *)&small_dial_needle_yellow_data);
+    const lv_image_dsc_t * new_src = (kw < 0.0f) ? &small_dial_needle_green_data
+                                                   : &small_dial_needle_yellow_data;
+    if(lv_image_get_src(needle) == new_src) return;   /* no change */
+    lv_image_set_src(needle, new_src);
 }
 
 static void temp_arc_cb(lv_observer_t * observer, lv_subject_t * subject)
