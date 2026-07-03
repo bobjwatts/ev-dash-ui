@@ -7,24 +7,31 @@
 #include "screens/screen_main_gen.h"
 #include "user_code/speedometer_assets.h"
 
+
 extern const lv_image_dsc_t dial_speed_dial_data;
 extern const lv_image_dsc_t dial_speed_needle_data;
 
 static const char *TAG = "ev_dash";
 
-/* Bounces speed_kmh 0 ↔ 200 km/h to demo the gauge without CAN data.
- * Replace with real CAN bus updates and remove this timer.          */
+/* Bounces speed_kmh 0 ↔ 200 km/h and power_kw −160 ↔ +160 to demo gauges.
+ * Replace with real CAN bus updates and remove this timer.                 */
 static void demo_speed_timer_cb(lv_timer_t *timer)
 {
     LV_UNUSED(timer);
-    static int speed = 0;
-    static int dir   = 1;
+    static int  speed      = 0;
+    static int  speed_dir  = 1;
+    static float power     = 0.0f;
+    static float power_dir = 2.0f;
 
-    speed += dir * 2;
-    if (speed >= 200) { speed = 200; dir = -1; }
-    else if (speed <= 0) { speed = 0; dir =  1; }
-
+    speed += speed_dir * 2;
+    if (speed >= 200) { speed = 200; speed_dir = -1; }
+    else if (speed <= 0) { speed = 0; speed_dir =  1; }
     lv_subject_set_int(&speed_kmh, speed);
+
+    power += power_dir;
+    if (power >= 160.0f) { power = 160.0f; power_dir = -2.0f; }
+    else if (power <= -160.0f) { power = -160.0f; power_dir =  2.0f; }
+    lv_subject_set_float(&power_kw, power);
 }
 
 void app_main(void)
@@ -71,6 +78,8 @@ void app_main(void)
     /* Demo starting values — replace with CAN bus feeds later. */
     lv_subject_set_int(&state_of_charge_pct, 75);
     lv_subject_set_int(&range_est_km, 408);
+    lv_subject_set_int(&odometer_km, 12345);
+    lv_subject_set_int(&motor_temp_c, 55);
 
     ESP_LOGI(TAG, "Embedded assets id=%s dial=%dx%d needle=%dx%d (dial=%u B needle=%u B)",
              EV_DASH_ASSETS_ID,

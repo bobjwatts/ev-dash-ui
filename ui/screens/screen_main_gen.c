@@ -61,6 +61,10 @@ lv_obj_t * screen_main_create(void)
     lv_obj_remove_flag(bg_img, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(bg_img, LV_OBJ_FLAG_IGNORE_LAYOUT);
 
+    lv_obj_t * power_gauge_0 = power_gauge_create(lv_obj_0, &power_kw, &power_needle_angle,
+                                                    &odometer_km, &motor_temp_c);
+    lv_obj_set_style_align(power_gauge_0, LV_ALIGN_CENTER, 0);
+
     lv_obj_t * speedometer_0 = speedometer_create(lv_obj_0, &speed_kmh, &speed_needle_angle);
     lv_obj_set_style_align(speedometer_0, LV_ALIGN_CENTER, 0);
 

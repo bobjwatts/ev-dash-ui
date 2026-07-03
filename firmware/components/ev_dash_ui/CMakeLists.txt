@@ -2,6 +2,7 @@ set(UI_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../ui)
 
 set(EV_DASH_UI_SOURCES
     ${UI_DIR}/components/gauge_center_readout/gauge_center_readout_gen.c
+    ${UI_DIR}/components/power_gauge/power_gauge_gen.c
     ${UI_DIR}/components/soc_gauge/soc_gauge_gen.c
     ${UI_DIR}/components/speed_scale_ring/speed_scale_ring_fine_gen.c
     ${UI_DIR}/components/speed_scale_ring/speed_scale_ring_gen.c
@@ -16,8 +17,13 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/images/dial_speed_arc_mask_data.c
     ${UI_DIR}/images/dial_speed_dial_data.c
     ${UI_DIR}/images/dial_speed_needle_data.c
+    ${UI_DIR}/images/small_dial_face_data.c
+    ${UI_DIR}/images/small_dial_arc_mask_data.c
+    ${UI_DIR}/images/small_dial_needle_green_data.c
+    ${UI_DIR}/images/small_dial_needle_yellow_data.c
     ${UI_DIR}/screens/screen_main_gen.c
     ${UI_DIR}/user_code/lvgl_compat.c
+    ${UI_DIR}/user_code/power_gauge_needle.c
     ${UI_DIR}/user_code/speedometer_assets.c
     ${UI_DIR}/user_code/speedometer_needle.c)
 

@@ -62,6 +62,14 @@ const void * dial_speed_dial;
 extern const void * dial_speed_dial_data;
 const void * background;
 extern const void * background_data;
+const void * small_dial_face;
+extern const void * small_dial_face_data;
+const void * small_dial_arc_mask;
+extern const void * small_dial_arc_mask_data;
+const void * small_dial_needle_green;
+extern const void * small_dial_needle_green_data;
+const void * small_dial_needle_yellow;
+extern const void * small_dial_needle_yellow_data;
 
 /*----------------
  * Global styles
@@ -91,6 +99,7 @@ lv_subject_t sys_state;
 lv_subject_t fault_code;
 lv_subject_t dark_theme;
 lv_subject_t speed_needle_angle;
+lv_subject_t power_needle_angle;
 
 /**********************
  *      MACROS
@@ -125,6 +134,10 @@ void ev_dash_init_gen(const char * asset_path)
     dial_speed_needle = &dial_speed_needle_data;
     dial_speed_dial = &dial_speed_dial_data;
     background = &background_data;
+    small_dial_face = &small_dial_face_data;
+    small_dial_arc_mask = &small_dial_arc_mask_data;
+    small_dial_needle_green = &small_dial_needle_green_data;
+    small_dial_needle_yellow = &small_dial_needle_yellow_data;
 
     /*----------------
      * Global styles
@@ -160,6 +173,7 @@ void ev_dash_init_gen(const char * asset_path)
     lv_subject_init_int(&fault_code, 0);
     lv_subject_init_int(&dark_theme, 0);
     lv_subject_init_int(&speed_needle_angle, -1090);
+    lv_subject_init_int(&power_needle_angle, 0);
 
     /*----------------
      * Translations
@@ -206,6 +220,10 @@ void ev_dash_init_gen(const char * asset_path)
     lv_xml_register_image(NULL, "dial_speed_needle", dial_speed_needle);
     lv_xml_register_image(NULL, "dial_speed_dial", dial_speed_dial);
     lv_xml_register_image(NULL, "background", background);
+    lv_xml_register_image(NULL, "small_dial_face", small_dial_face);
+    lv_xml_register_image(NULL, "small_dial_arc_mask", small_dial_arc_mask);
+    lv_xml_register_image(NULL, "small_dial_needle_green", small_dial_needle_green);
+    lv_xml_register_image(NULL, "small_dial_needle_yellow", small_dial_needle_yellow);
 #endif
 
 #if LV_USE_XML == 0

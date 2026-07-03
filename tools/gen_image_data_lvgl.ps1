@@ -40,13 +40,20 @@ if (-not (Test-Path $LvglImagePy)) {
 try { & $Python -m pip install pypng lz4 -q --disable-pip-version-check *>$null } catch {}
 
 # ── Source PNGs ───────────────────────────────────────────────────────────────
-$dialPng   = Join-Path $UiRoot "images\sc_dial_speed_face.png"
-$needlePng = Join-Path $UiRoot "images\sc_dial_speed_needle.png"
-$maskPng   = Join-Path $UiRoot "images\sc_dial_speed_arc_mask.png"
-$bgPng     = Join-Path $UiRoot "images\background.png"
+$dialPng            = Join-Path $UiRoot "images\sc_dial_speed_face.png"
+$needlePng          = Join-Path $UiRoot "images\sc_dial_speed_needle.png"
+$maskPng            = Join-Path $UiRoot "images\sc_dial_speed_arc_mask.png"
+$bgPng              = Join-Path $UiRoot "images\background.png"
+$smallDialFacePng   = Join-Path $UiRoot "images\small_dial_speed_face.png"
+$smallDialMaskPng   = Join-Path $UiRoot "images\small_dial_speed_arc_mask.png"
+$smallNeedleGreenPng  = Join-Path $UiRoot "images\small_dial_speed_needle_green.png"
+$smallNeedleYellowPng = Join-Path $UiRoot "images\small_dial_speed_needle_yellow.png"
 
 foreach ($f in @($dialPng, $needlePng, $maskPng)) {
     if (-not (Test-Path $f)) { throw "Missing source PNG: $f" }
+}
+foreach ($f in @($smallDialFacePng, $smallDialMaskPng, $smallNeedleGreenPng, $smallNeedleYellowPng)) {
+    if (-not (Test-Path $f)) { throw "Missing small_dial source PNG: $f" }
 }
 
 # ── Temp output dir ───────────────────────────────────────────────────────────
@@ -85,6 +92,31 @@ Write-Host "Step 3: LVGLImage.py arc mask (RGB565A8) ..."
     -o $outDir --name=dial_speed_arc_mask_data `
     $maskPng -v
 
+# ── Convert small_dial assets (power gauge) ──────────────────────────────────
+Write-Host "Step 4: LVGLImage.py small_dial face (RGB565A8, dithered) ..."
+& $Python $LvglImagePy `
+    --ofmt=C --cf=RGB565A8 --compress=NONE --rgb565dither `
+    -o $outDir --name=small_dial_face_data `
+    $smallDialFacePng -v
+
+Write-Host "Step 5: LVGLImage.py small_dial arc mask (RGB565A8) ..."
+& $Python $LvglImagePy `
+    --ofmt=C --cf=RGB565A8 --compress=NONE `
+    -o $outDir --name=small_dial_arc_mask_data `
+    $smallDialMaskPng -v
+
+Write-Host "Step 6: LVGLImage.py small_dial needle green (RGB565A8) ..."
+& $Python $LvglImagePy `
+    --ofmt=C --cf=RGB565A8 --compress=NONE `
+    -o $outDir --name=small_dial_needle_green_data `
+    $smallNeedleGreenPng -v
+
+Write-Host "Step 7: LVGLImage.py small_dial needle yellow (RGB565A8) ..."
+& $Python $LvglImagePy `
+    --ofmt=C --cf=RGB565A8 --compress=NONE `
+    -o $outDir --name=small_dial_needle_yellow_data `
+    $smallNeedleYellowPng -v
+
 # ── Convert background (optional — skip if not present) ───────────────────────
 if (Test-Path $bgPng) {
     Write-Host "Step 4: LVGLImage.py background (RGB565, dithered) ..."
@@ -97,15 +129,19 @@ if (Test-Path $bgPng) {
 
 # ── Install outputs ───────────────────────────────────────────────────────────
 $imgDir = Join-Path $UiRoot "images"
-Copy-Item (Join-Path $outDir "dial_speed_dial_data.c")     (Join-Path $imgDir "dial_speed_dial_data.c")     -Force
-Copy-Item (Join-Path $outDir "dial_speed_needle_data.c")   (Join-Path $imgDir "dial_speed_needle_data.c")   -Force
-Copy-Item (Join-Path $outDir "dial_speed_arc_mask_data.c") (Join-Path $imgDir "dial_speed_arc_mask_data.c") -Force
+Copy-Item (Join-Path $outDir "dial_speed_dial_data.c")          (Join-Path $imgDir "dial_speed_dial_data.c")          -Force
+Copy-Item (Join-Path $outDir "dial_speed_needle_data.c")        (Join-Path $imgDir "dial_speed_needle_data.c")        -Force
+Copy-Item (Join-Path $outDir "dial_speed_arc_mask_data.c")      (Join-Path $imgDir "dial_speed_arc_mask_data.c")      -Force
+Copy-Item (Join-Path $outDir "small_dial_face_data.c")          (Join-Path $imgDir "small_dial_face_data.c")          -Force
+Copy-Item (Join-Path $outDir "small_dial_arc_mask_data.c")      (Join-Path $imgDir "small_dial_arc_mask_data.c")      -Force
+Copy-Item (Join-Path $outDir "small_dial_needle_green_data.c")  (Join-Path $imgDir "small_dial_needle_green_data.c")  -Force
+Copy-Item (Join-Path $outDir "small_dial_needle_yellow_data.c") (Join-Path $imgDir "small_dial_needle_yellow_data.c") -Force
 if (Test-Path $bgPng) {
     Copy-Item (Join-Path $outDir "background_data.c") (Join-Path $imgDir "background_data.c") -Force
 }
 Remove-Item $outDir -Recurse -Force
 
-$installed = "dial_speed_dial_data.c, dial_speed_needle_data.c, dial_speed_arc_mask_data.c"
+$installed = "dial_speed_dial_data.c, dial_speed_needle_data.c, dial_speed_arc_mask_data.c, small_dial_*.c"
 if (Test-Path $bgPng) { $installed += ", background_data.c" }
 Write-Host "Installed $installed"
 

@@ -40,6 +40,10 @@ ui/images/dial_speed_needle_data.c
 ui/images/dial_speed_arc_mask_data.c
 ui/images/ev_dash_assets.h
 ui/images/sc_dial_speed_*_data.c
+ui/images/small_dial_face_data.c
+ui/images/small_dial_arc_mask_data.c
+ui/images/small_dial_needle_green_data.c
+ui/images/small_dial_needle_yellow_data.c
 
 # --- Debug / pipeline intermediates (regenerate: tools/gen_debug_draw_test.ps1) ---
 ui/images/_debug_*

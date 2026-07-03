@@ -104,6 +104,7 @@
 		<int name="dark_theme" value="0" help="0:light 1:dark" />
 
 		<int name="speed_needle_angle" value="-1090" />
+		<int name="power_needle_angle" value="0" />
 	</subjects>
 
 	<images>

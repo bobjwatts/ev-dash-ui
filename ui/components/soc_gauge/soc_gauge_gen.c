@@ -43,6 +43,9 @@
  * which live at 150 px radius.                                        */
 #define SOC_LABEL_RADIUS    160
 
+#define SOC_WARN_PCT        20    /* below this → orange warning */
+#define SOC_CRIT_PCT        10    /* below this → red danger     */
+
 /* ── Text positions (x,y offset from speedometer centre, px) ───────
  * Tweak these and reflash to dial in placement without touching code. */
 #define SOC_LBL_E_F_RADIUS  SOC_LABEL_RADIUS   /* E/F computed from angle */

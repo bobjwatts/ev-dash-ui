@@ -145,6 +145,10 @@ extern lv_font_t * font_small;
 extern const void * dial_speed_needle;
 extern const void * dial_speed_dial;
 extern const void * background;
+extern const void * small_dial_face;
+extern const void * small_dial_arc_mask;
+extern const void * small_dial_needle_green;
+extern const void * small_dial_needle_yellow;
 
 /*----------------
  * Subjects
@@ -170,6 +174,7 @@ extern lv_subject_t sys_state;
 extern lv_subject_t fault_code;
 extern lv_subject_t dark_theme;
 extern lv_subject_t speed_needle_angle;
+extern lv_subject_t power_needle_angle;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -199,6 +204,7 @@ void ev_dash_init_gen(const char * asset_path);
 #include "components/speed_scale_ring/speed_scale_ring_gen.h"
 #include "components/speedometer/speedometer_gen.h"
 #include "components/soc_gauge/soc_gauge_gen.h"
+#include "components/power_gauge/power_gauge_gen.h"
 #include "screens/screen_main_gen.h"
 
 #ifdef __cplusplus
