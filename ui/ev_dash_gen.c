@@ -60,6 +60,8 @@ const void * dial_speed_needle;
 extern const void * dial_speed_needle_data;
 const void * dial_speed_dial;
 extern const void * dial_speed_dial_data;
+const void * dial_speed_arc_mask;
+extern const lv_image_dsc_t dial_speed_arc_mask_data;
 const void * background;
 extern const void * background_data;
 const void * small_dial_face;
@@ -100,6 +102,10 @@ lv_subject_t fault_code;
 lv_subject_t dark_theme;
 lv_subject_t speed_needle_angle;
 lv_subject_t power_needle_angle;
+lv_subject_t hour;
+lv_subject_t minute;
+lv_subject_t blinker_left;
+lv_subject_t blinker_right;
 
 /**********************
  *      MACROS
@@ -133,6 +139,7 @@ void ev_dash_init_gen(const char * asset_path)
      *----------------*/
     dial_speed_needle = &dial_speed_needle_data;
     dial_speed_dial = &dial_speed_dial_data;
+    dial_speed_arc_mask = &dial_speed_arc_mask_data;
     background = &background_data;
     small_dial_face = &small_dial_face_data;
     small_dial_arc_mask = &small_dial_arc_mask_data;
@@ -174,6 +181,10 @@ void ev_dash_init_gen(const char * asset_path)
     lv_subject_init_int(&dark_theme, 0);
     lv_subject_init_int(&speed_needle_angle, -1090);
     lv_subject_init_int(&power_needle_angle, 0);
+    lv_subject_init_int(&hour, 0);
+    lv_subject_init_int(&minute, 0);
+    lv_subject_init_int(&blinker_left, 0);
+    lv_subject_init_int(&blinker_right, 0);
 
     /*----------------
      * Translations

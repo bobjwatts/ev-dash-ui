@@ -22,6 +22,9 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/images/small_dial_needle_green_data.c
     ${UI_DIR}/images/small_dial_needle_yellow_data.c
     ${UI_DIR}/screens/screen_main_gen.c
+    ${UI_DIR}/components/info_gauge/info_gauge_gen.c
+    ${UI_DIR}/components/top_bar/top_bar_gen.c
+    ${UI_DIR}/user_code/blinker.c
     ${UI_DIR}/user_code/lvgl_compat.c
     ${UI_DIR}/user_code/power_gauge_needle.c
     ${UI_DIR}/user_code/speedometer_assets.c

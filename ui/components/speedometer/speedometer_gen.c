@@ -60,14 +60,8 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
     lv_obj_add_flag(lv_obj_0, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
     lv_obj_t * lv_image_0 = lv_image_create(lv_obj_0);
-#if defined(SPEEDOMETER_DEBUG_DIAL_SOLID) && SPEEDOMETER_DEBUG_DIAL_SOLID && defined(EV_DASH_DEBUG_DRAW_TEST) && EV_DASH_DEBUG_DRAW_TEST
-    extern const lv_image_dsc_t debug_img_439_rgb565_data;
-    lv_image_set_src(lv_image_0, &debug_img_439_rgb565_data);
-    speedometer_dial_image_set(lv_image_0, &debug_img_439_rgb565_data);
-#else
     lv_image_set_src(lv_image_0, dial_speed_dial);
     speedometer_dial_image_set(lv_image_0, (const lv_image_dsc_t *)dial_speed_dial);
-#endif
     lv_obj_set_align(lv_image_0, LV_ALIGN_TOP_LEFT);
 
     /* Scale rings disabled: lv_scale redraws all 120+ ticks on every speed change
@@ -98,12 +92,10 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
     lv_arc_set_value(active_arc, 0);
     lv_subject_add_observer_obj(speed, active_arc_speed_cb, active_arc, NULL);
 
-    /* Tick overlay mask — static PNG with opaque ring punching gaps between ticks.
-     * Transparent tick positions let the arc colour (white/yellow) show through. */
-    extern const lv_image_dsc_t dial_speed_arc_mask_data;
+    /* Tick overlay mask — pixel data served from PSRAM (cached at ev_dash_init). */
     lv_obj_t * arc_mask_img = lv_image_create(lv_obj_0);
-    lv_image_set_src(arc_mask_img, &dial_speed_arc_mask_data);
-    speedometer_image_set_1to1(arc_mask_img, &dial_speed_arc_mask_data, "arc_mask");
+    lv_image_set_src(arc_mask_img, dial_speed_arc_mask);
+    speedometer_image_set_1to1(arc_mask_img, (const lv_image_dsc_t *)dial_speed_arc_mask, "arc_mask");
     lv_obj_align(arc_mask_img, LV_ALIGN_CENTER, 1, 1);
 
     /* Speed scale labels — manually positioned at each 20 km/h mark.

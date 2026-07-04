@@ -144,6 +144,7 @@ extern lv_font_t * font_small;
 
 extern const void * dial_speed_needle;
 extern const void * dial_speed_dial;
+extern const void * dial_speed_arc_mask;
 extern const void * background;
 extern const void * small_dial_face;
 extern const void * small_dial_arc_mask;
@@ -175,6 +176,10 @@ extern lv_subject_t fault_code;
 extern lv_subject_t dark_theme;
 extern lv_subject_t speed_needle_angle;
 extern lv_subject_t power_needle_angle;
+extern lv_subject_t hour;
+extern lv_subject_t minute;
+extern lv_subject_t blinker_left;
+extern lv_subject_t blinker_right;
 
 /**********************
  * GLOBAL PROTOTYPES

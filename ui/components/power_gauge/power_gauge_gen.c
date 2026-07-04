@@ -29,6 +29,7 @@
 #include "power_gauge_gen.h"
 #include "../../ev_dash.h"
 #include <math.h>
+#include <limits.h>
 
 /*********************
  *      DEFINES
@@ -45,7 +46,7 @@
  * +110° from top → 270°+110°=380°→20° (kW_max, lower-right)
  * Total sweep: 220° */
 #define POWER_ARC_SIZE            210   /* slightly inside the 214 px mask */
-#define POWER_ARC_WIDTH           15
+#define POWER_ARC_WIDTH           22
 #define POWER_ARC_BG_START        160   /* degrees at kW_min (−160 kW) */
 #define POWER_ARC_BG_END          20    /* degrees at kW_max (+160 kW)  */
 #define POWER_ARC_SWEEP           220   /* total degrees across full kW range */
@@ -83,6 +84,7 @@
 
 static void power_arc_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void power_label_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void power_kw_label_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void power_needle_color_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void temp_arc_cb(lv_observer_t * observer, lv_subject_t * subject);
 
@@ -108,7 +110,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_set_flag(cont, LV_OBJ_FLAG_SCROLLABLE, false);
     lv_obj_add_flag(cont, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
 
-    /* ── 1. Dial face image ──────────────────────────────────────── */
+    /* Dial face — pixel data served from PSRAM (cached at ev_dash_init). */
     lv_obj_t * face_img = lv_image_create(cont);
     lv_image_set_src(face_img, small_dial_face);
     lv_image_set_scale(face_img, LV_SCALE_NONE);
@@ -149,7 +151,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_arc_set_bg_angles(yellow_arc, 270, 20);        /* right half: top → lower-right (110°) */
     lv_arc_set_range(yellow_arc, 0, POWER_KW_MAX);
     lv_arc_set_value(yellow_arc, 0);
-    lv_obj_set_user_data(yellow_arc, (void *)(uintptr_t)0);   /* 0 = power side */
+    lv_obj_set_user_data(yellow_arc, (void *)(uintptr_t)0);   /* bit0=side(0), bits1+=prev_val(0) */
     lv_subject_add_observer_obj(power_kw, power_arc_cb, yellow_arc, NULL);
 
     /* ── 4. Green active arc (left/regen half: 120°→270°, reverse) ─ */
@@ -171,13 +173,12 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_arc_set_mode(green_arc, LV_ARC_MODE_REVERSE); /* fills from top toward lower-left */
     lv_arc_set_range(green_arc, 0, -POWER_KW_MIN);   /* 0..160 */
     lv_arc_set_value(green_arc, 0);
-    lv_obj_set_user_data(green_arc, (void *)(uintptr_t)1);    /* 1 = regen side */
+    lv_obj_set_user_data(green_arc,  (void *)(uintptr_t)1);   /* bit0=side(1), bits1+=prev_val(0) */
     lv_subject_add_observer_obj(power_kw, power_arc_cb, green_arc, NULL);
 
-    /* ── 5. Tick-gap mask image ──────────────────────────────────── */
-    extern const lv_image_dsc_t small_dial_arc_mask_data;
+    /* Tick-gap mask — pixel data served from PSRAM (cached at ev_dash_init). */
     lv_obj_t * mask_img = lv_image_create(cont);
-    lv_image_set_src(mask_img, &small_dial_arc_mask_data);
+    lv_image_set_src(mask_img, small_dial_arc_mask);
     lv_image_set_scale(mask_img, LV_SCALE_NONE);
     lv_obj_align(mask_img, LV_ALIGN_CENTER, 0, 0);
 
@@ -203,11 +204,9 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
         lv_subject_add_observer_obj(power_kw, power_label_cb, lbl, NULL);
     }
 
-    /* ── 7. Needle ───────────────────────────────────────────────── */
-    extern const lv_image_dsc_t small_dial_needle_yellow_data;
-    extern const lv_image_dsc_t small_dial_needle_green_data;
+    /* ── 7. Needle — pixel data served from PSRAM (cached at ev_dash_init) ── */
     lv_obj_t * needle_img = lv_image_create(cont);
-    lv_image_set_src(needle_img, &small_dial_needle_yellow_data);
+    lv_image_set_src(needle_img, small_dial_needle_yellow);
     /* Match speedometer_image_set_1to1: explicit size + inner-align + 1:1 scale.
      * Object sized to the actual image pixels; pivot is set independently below. */
     lv_image_set_inner_align(needle_img, LV_IMAGE_ALIGN_CENTER);
@@ -225,10 +224,13 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
 
     /* ── 8. Centre readout ───────────────────────────────────────── */
     lv_obj_t * lbl_power = lv_label_create(cont);
-    lv_label_bind_text(lbl_power, power_kw, "%+.0f");
+    lv_label_set_text(lbl_power, "+0");
     lv_obj_set_style_text_font(lbl_power, font_heading, 0);
     lv_obj_set_style_text_color(lbl_power, COLOR_TEXT_HI, 0);
     lv_obj_align(lbl_power, LV_ALIGN_CENTER, 0, -14);
+    /* INT32_MIN as sentinel so the first real value always triggers a redraw. */
+    lv_obj_set_user_data(lbl_power, (void *)(intptr_t)INT32_MIN);
+    lv_subject_add_observer_obj(power_kw, power_kw_label_cb, lbl_power, NULL);
 
     lv_obj_t * lbl_kw_unit = lv_label_create(cont);
     lv_label_set_text(lbl_kw_unit, "kW");
@@ -279,19 +281,21 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
 
 static void power_arc_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
-    lv_obj_t * arc    = (lv_obj_t *)lv_observer_get_target_obj(observer);
-    int arc_side      = (int)(uintptr_t)lv_obj_get_user_data(arc);
-    float kw          = lv_subject_get_float(subject);
+    lv_obj_t  * arc    = (lv_obj_t *)lv_observer_get_target_obj(observer);
+    uintptr_t   ud     = (uintptr_t)lv_obj_get_user_data(arc);
+    int arc_side       = (int)(ud & 1u);
+    int prev_val       = (int)(ud >> 1);
+    float kw           = lv_subject_get_float(subject);
     int val;
     if(arc_side == 0) {
-        /* yellow — power side */
         val = (kw > 0.0f) ? (int)kw : 0;
         if(val > POWER_KW_MAX) val = POWER_KW_MAX;
     } else {
-        /* green — regen side */
         val = (kw < 0.0f) ? (int)(-kw) : 0;
         if(val > -POWER_KW_MIN) val = -POWER_KW_MIN;
     }
+    if(val == prev_val) return;   /* integer value unchanged — skip arc redraw */
+    lv_obj_set_user_data(arc, (void *)(uintptr_t)(((unsigned)val << 1) | (unsigned)arc_side));
     lv_arc_set_value(arc, val);
 }
 
@@ -315,14 +319,23 @@ static void power_label_cb(lv_observer_t * observer, lv_subject_t * subject)
     lv_obj_set_style_text_color(lbl, col, 0);
 }
 
+static void power_kw_label_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    lv_obj_t * lbl  = (lv_obj_t *)lv_observer_get_target_obj(observer);
+    int kw_int      = (int)lv_subject_get_float(subject);
+    int prev        = (int)(intptr_t)lv_obj_get_user_data(lbl);
+    if(kw_int == prev) return;   /* rounded integer unchanged — no text redraw */
+    lv_obj_set_user_data(lbl, (void *)(intptr_t)kw_int);
+    char buf[8];
+    lv_snprintf(buf, sizeof(buf), "%+d", kw_int);
+    lv_label_set_text(lbl, buf);
+}
+
 static void power_needle_color_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     lv_obj_t * needle = (lv_obj_t *)lv_observer_get_target_obj(observer);
-    extern const lv_image_dsc_t small_dial_needle_green_data;
-    extern const lv_image_dsc_t small_dial_needle_yellow_data;
     float kw = lv_subject_get_float(subject);
-    const lv_image_dsc_t * new_src = (kw < 0.0f) ? &small_dial_needle_green_data
-                                                   : &small_dial_needle_yellow_data;
+    const void * new_src = (kw < 0.0f) ? small_dial_needle_green : small_dial_needle_yellow;
     if(lv_image_get_src(needle) == new_src) return;   /* no change */
     lv_image_set_src(needle, new_src);
 }

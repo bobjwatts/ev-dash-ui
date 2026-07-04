@@ -96,6 +96,14 @@
 		<int name="trip_km" value="0" />
 		<int name="range_est_km" value="0" />
 
+		<!-- ── Clock (from ZombieVerter Hour / Min spot values) ─── -->
+		<int name="hour" value="0" />
+		<int name="minute" value="0" />
+
+		<!-- ── Turn signals (GPIO inputs, not in ZombieVerter) ──── -->
+		<int name="blinker_left" value="0" />
+		<int name="blinker_right" value="0" />
+
 		<!-- ── System status ─────────────────────────────── -->
 		<int name="sys_state" value="1" />
 		<!-- maps to SysState -->
