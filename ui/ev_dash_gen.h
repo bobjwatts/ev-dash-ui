@@ -114,6 +114,18 @@ typedef enum {
     SYSSTATE_SYS_CHARGE = 3
 }SysState_t;
 
+typedef enum {
+    INFOPANEL_INFO_PANEL_PACK_VOLTAGE = 0,
+    INFOPANEL_INFO_PANEL_CELL_BALANCE = 1,
+    INFOPANEL_INFO_PANEL_EFFICIENCY = 2,
+    INFOPANEL_INFO_PANEL_CHARGING = 3
+}InfoPanel_t;
+
+#define INFO_PANEL_PACK_VOLTAGE  INFOPANEL_INFO_PANEL_PACK_VOLTAGE
+#define INFO_PANEL_CELL_BALANCE  INFOPANEL_INFO_PANEL_CELL_BALANCE
+#define INFO_PANEL_EFFICIENCY    INFOPANEL_INFO_PANEL_EFFICIENCY
+#define INFO_PANEL_CHARGING      INFOPANEL_INFO_PANEL_CHARGING
+
 /**********************
  * GLOBAL VARIABLES
  **********************/
@@ -180,6 +192,12 @@ extern lv_subject_t hour;
 extern lv_subject_t minute;
 extern lv_subject_t blinker_left;
 extern lv_subject_t blinker_right;
+extern lv_subject_t info_panel;
+extern lv_subject_t cell_balance_mv;
+extern lv_subject_t efficiency_wh_per_km;
+extern lv_subject_t trip_wh_used;
+extern lv_subject_t aux_voltage_v;
+extern lv_subject_t charge_amps_a;
 
 /**********************
  * GLOBAL PROTOTYPES

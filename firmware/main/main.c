@@ -1,3 +1,4 @@
+#include "dashboard_buttons.h"
 #include "bsp/esp-bsp.h"
 #include "bsp/display.h"
 #include "esp_log.h"
@@ -80,6 +81,15 @@ void app_main(void)
     lv_subject_set_int(&range_est_km, 408);
     lv_subject_set_int(&odometer_km, 12345);
     lv_subject_set_int(&motor_temp_c, 55);
+    lv_subject_set_float(&battery_voltage_v, 350.0f);
+    lv_subject_set_int(&batt_temp_c, 42);
+    lv_subject_set_int(&inverter_temp_c, 38);
+    lv_subject_set_float(&aux_voltage_v, 12.5f);
+    lv_subject_set_int(&cell_balance_mv, 8);
+    lv_subject_set_int(&efficiency_wh_per_km, 165);
+    lv_subject_set_int(&energy_kwh_remaining, 32);   /* 3.2 kWh (tenths) */
+    lv_subject_set_float(&charge_amps_a, 32.0f);
+    lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
 
     ESP_LOGI(TAG, "Embedded assets id=%s dial=%dx%d needle=%dx%d (dial=%u B needle=%u B)",
              EV_DASH_ASSETS_ID,
@@ -104,5 +114,7 @@ void app_main(void)
 
     lv_timer_create(demo_speed_timer_cb, 50, NULL);
 
-    ESP_LOGI(TAG, "UI loaded");
+    dashboard_buttons_init();
+
+    ESP_LOGI(TAG, "UI loaded (panel=GPIO2 trip_reset=GPIO3; set sys_state=SYS_CHARGE to test panel 4)");
 }

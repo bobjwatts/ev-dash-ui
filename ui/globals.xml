@@ -16,6 +16,14 @@
 			<enum name="SYS_ACTIVE" value="2" />
 			<enum name="SYS_CHARGE" value="3" />
 		</enumdef>
+
+		<!-- Right-hand info gauge panel (button cycles 0–2; 3 when charging) -->
+		<enumdef name="InfoPanel">
+			<enum name="INFO_PANEL_PACK_VOLTAGE" value="0" />
+			<enum name="INFO_PANEL_CELL_BALANCE" value="1" />
+			<enum name="INFO_PANEL_EFFICIENCY" value="2" />
+			<enum name="INFO_PANEL_CHARGING" value="3" />
+		</enumdef>
 	</api>
 
 	<consts>
@@ -103,6 +111,16 @@
 		<!-- ── Turn signals (GPIO inputs, not in ZombieVerter) ──── -->
 		<int name="blinker_left" value="0" />
 		<int name="blinker_right" value="0" />
+
+		<!-- ── Right info gauge ───────────────────────────── -->
+		<int name="info_panel" value="0" />
+		<!-- InfoPanel enum; 0–2 always, 3 when charging -->
+		<int name="cell_balance_mv" value="0" />
+		<int name="efficiency_wh_per_km" value="0" />
+		<int name="trip_wh_used" value="0" />
+		<!-- trip energy integrator (Wh), reset with trip button -->
+		<float name="aux_voltage_v" value="0.0" />
+		<float name="charge_amps_a" value="0.0" />
 
 		<!-- ── System status ─────────────────────────────── -->
 		<int name="sys_state" value="1" />

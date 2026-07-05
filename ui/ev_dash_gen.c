@@ -106,6 +106,12 @@ lv_subject_t hour;
 lv_subject_t minute;
 lv_subject_t blinker_left;
 lv_subject_t blinker_right;
+lv_subject_t info_panel;
+lv_subject_t cell_balance_mv;
+lv_subject_t efficiency_wh_per_km;
+lv_subject_t trip_wh_used;
+lv_subject_t aux_voltage_v;
+lv_subject_t charge_amps_a;
 
 /**********************
  *      MACROS
@@ -185,6 +191,12 @@ void ev_dash_init_gen(const char * asset_path)
     lv_subject_init_int(&minute, 0);
     lv_subject_init_int(&blinker_left, 0);
     lv_subject_init_int(&blinker_right, 0);
+    lv_subject_init_int(&info_panel, 0);
+    lv_subject_init_int(&cell_balance_mv, 0);
+    lv_subject_init_int(&efficiency_wh_per_km, 0);
+    lv_subject_init_int(&trip_wh_used, 0);
+    lv_subject_init_float(&aux_voltage_v, 0.0f);
+    lv_subject_init_float(&charge_amps_a, 0.0f);
 
     /*----------------
      * Translations
