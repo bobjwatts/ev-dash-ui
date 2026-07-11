@@ -2,27 +2,21 @@
  * @file dashboard_buttons.c
  * @brief Panel-cycle and trip-reset buttons with debounce.
  *
- * Panel button: cycles info_panel (3 panels driving, 4 when charging).
- * Trip reset:   clears trip_km, trip_wh_used, efficiency_wh_per_km.
- *
- * Charging UX:
- *   - On charge start → auto-switch to INFO_PANEL_CHARGING once
- *   - On charge stop  → if on charging panel, fall back to pack voltage
+ * GPIO is polled from an lv_timer so subject updates and observer callbacks
+ * run on the LVGL thread (FreeRTOS task + display lock was missing notifies).
  */
 
 #include "dashboard_buttons.h"
-#include "bsp/esp-bsp.h"
-#include "bsp/display.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "ev_dash_gen.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "lvgl.h"
 
 static const char * TAG = "dash_btn";
 
-/* Change these if your wiring differs (input, internal pull-up, active LOW). */
+/** Set to a positive value (ms) to auto-cycle panels for bench testing without GPIO. */
+#define DASH_DEMO_PANEL_CYCLE_MS  0
 #define DASH_BTN_PANEL_GPIO       GPIO_NUM_2
 #define DASH_BTN_TRIP_RESET_GPIO  GPIO_NUM_3
 
@@ -76,7 +70,7 @@ static void advance_info_panel(void)
     int count = info_panel_count();
     panel = (panel + 1) % count;
     lv_subject_set_int(&info_panel, panel);
-    ESP_LOGI(TAG, "info panel → %d (%d available)", panel, count);
+    ESP_LOGI(TAG, "info panel -> %d (%d available)", panel, count);
 }
 
 static void check_charging_transitions(void)
@@ -85,16 +79,15 @@ static void check_charging_transitions(void)
 
     if(st == SYSSTATE_SYS_CHARGE && s_prev_sys_state != SYSSTATE_SYS_CHARGE) {
         lv_subject_set_int(&info_panel, INFO_PANEL_CHARGING);
-        ESP_LOGI(TAG, "charging started → panel %d", INFO_PANEL_CHARGING);
+        ESP_LOGI(TAG, "charging started -> panel %d", INFO_PANEL_CHARGING);
     }
     else if(st != SYSSTATE_SYS_CHARGE && s_prev_sys_state == SYSSTATE_SYS_CHARGE) {
         if(lv_subject_get_int(&info_panel) == INFO_PANEL_CHARGING) {
             lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
-            ESP_LOGI(TAG, "charging stopped → panel %d", INFO_PANEL_PACK_VOLTAGE);
+            ESP_LOGI(TAG, "charging stopped -> panel %d", INFO_PANEL_PACK_VOLTAGE);
         }
     }
 
-    /* Clamp panel index if charging ended while on slot 3 */
     if(st != SYSSTATE_SYS_CHARGE &&
        lv_subject_get_int(&info_panel) >= info_panel_count()) {
         lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
@@ -103,38 +96,36 @@ static void check_charging_transitions(void)
     s_prev_sys_state = st;
 }
 
-static void btn_task(void * arg)
+static void btn_timer_cb(lv_timer_t * timer)
 {
-    LV_UNUSED(arg);
+    LV_UNUSED(timer);
 
-    while(true) {
-        bsp_display_lock(0);
+    check_charging_transitions();
 
-        check_charging_transitions();
-
-        if(btn_poll(&s_panel_btn)) {
-            advance_info_panel();
-        }
-        if(btn_poll(&s_trip_btn)) {
-            lv_subject_set_int(&trip_km, 0);
-            lv_subject_set_int(&trip_wh_used, 0);
-            lv_subject_set_int(&efficiency_wh_per_km, 0);
-            ESP_LOGI(TAG, "trip reset");
-        }
-
-        bsp_display_unlock();
-
-        vTaskDelay(pdMS_TO_TICKS(POLL_MS));
+    if(btn_poll(&s_panel_btn)) {
+        advance_info_panel();
+    }
+    if(btn_poll(&s_trip_btn)) {
+        lv_subject_set_int(&trip_km, 0);
+        lv_subject_set_int(&trip_wh_used, 0);
+        lv_subject_set_int(&efficiency_wh_per_km, 0);
+        ESP_LOGI(TAG, "trip reset");
     }
 }
 
+#if DASH_DEMO_PANEL_CYCLE_MS > 0
+static void demo_panel_timer_cb(lv_timer_t * timer)
+{
+    LV_UNUSED(timer);
+    advance_info_panel();
+}
+#endif
+
 void dashboard_trip_reset(void)
 {
-    bsp_display_lock(0);
     lv_subject_set_int(&trip_km, 0);
     lv_subject_set_int(&trip_wh_used, 0);
     lv_subject_set_int(&efficiency_wh_per_km, 0);
-    bsp_display_unlock();
     ESP_LOGI(TAG, "trip reset");
 }
 
@@ -161,6 +152,11 @@ void dashboard_buttons_init(void)
 
     s_prev_sys_state = lv_subject_get_int(&sys_state);
 
-    xTaskCreate(btn_task, "dash_btn", 4096, NULL, 5, NULL);
-    ESP_LOGI(TAG, "panel=GPIO%d trip_reset=GPIO%d", DASH_BTN_PANEL_GPIO, DASH_BTN_TRIP_RESET_GPIO);
+    lv_timer_create(btn_timer_cb, POLL_MS, NULL);
+#if DASH_DEMO_PANEL_CYCLE_MS > 0
+    lv_timer_create(demo_panel_timer_cb, DASH_DEMO_PANEL_CYCLE_MS, NULL);
+    ESP_LOGW(TAG, "demo panel auto-cycle every %d ms", DASH_DEMO_PANEL_CYCLE_MS);
+#endif
+    ESP_LOGI(TAG, "panel=GPIO%d trip_reset=GPIO%d (active LOW, pull-up)", DASH_BTN_PANEL_GPIO,
+             DASH_BTN_TRIP_RESET_GPIO);
 }

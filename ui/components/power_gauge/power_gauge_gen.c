@@ -46,7 +46,7 @@
  * +110° from top → 270°+110°=380°→20° (kW_max, lower-right)
  * Total sweep: 220° */
 #define POWER_ARC_SIZE            210   /* slightly inside the 214 px mask */
-#define POWER_ARC_WIDTH           22
+#define POWER_ARC_WIDTH           25
 #define POWER_ARC_BG_START        160   /* degrees at kW_min (−160 kW) */
 #define POWER_ARC_BG_END          20    /* degrees at kW_max (+160 kW)  */
 #define POWER_ARC_SWEEP           220   /* total degrees across full kW range */
