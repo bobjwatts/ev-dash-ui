@@ -1,4 +1,5 @@
 #include "dashboard_buttons.h"
+#include "zv_can.h"
 #include "bsp/esp-bsp.h"
 #include "bsp/display.h"
 #include "esp_log.h"
@@ -13,27 +14,6 @@ extern const lv_image_dsc_t dial_speed_dial_data;
 extern const lv_image_dsc_t dial_speed_needle_data;
 
 static const char *TAG = "ev_dash";
-
-/* Bounces speed_kmh 0 ↔ 200 km/h and power_kw −160 ↔ +160 to demo gauges.
- * Replace with real CAN bus updates and remove this timer.                 */
-static void demo_speed_timer_cb(lv_timer_t *timer)
-{
-    LV_UNUSED(timer);
-    static int  speed      = 0;
-    static int  speed_dir  = 1;
-    static float power     = 0.0f;
-    static float power_dir = 2.0f;
-
-    speed += speed_dir * 2;
-    if (speed >= 200) { speed = 200; speed_dir = -1; }
-    else if (speed <= 0) { speed = 0; speed_dir =  1; }
-    lv_subject_set_int(&speed_kmh, speed);
-
-    power += power_dir;
-    if (power >= 160.0f) { power = 160.0f; power_dir = -2.0f; }
-    else if (power <= -160.0f) { power = -160.0f; power_dir =  2.0f; }
-    lv_subject_set_float(&power_kw, power);
-}
 
 void app_main(void)
 {
@@ -76,19 +56,6 @@ void app_main(void)
 
     ev_dash_init(NULL);
 
-    /* Demo starting values — replace with CAN bus feeds later. */
-    lv_subject_set_int(&state_of_charge_pct, 75);
-    lv_subject_set_int(&range_est_km, 408);
-    lv_subject_set_int(&odometer_km, 12345);
-    lv_subject_set_int(&motor_temp_c, 55);
-    lv_subject_set_float(&battery_voltage_v, 350.0f);
-    lv_subject_set_int(&batt_temp_c, 42);
-    lv_subject_set_int(&inverter_temp_c, 38);
-    lv_subject_set_float(&aux_voltage_v, 12.5f);
-    lv_subject_set_int(&cell_balance_mv, 8);
-    lv_subject_set_int(&efficiency_wh_per_km, 165);
-    lv_subject_set_int(&energy_kwh_remaining, 32);   /* 3.2 kWh (tenths) */
-    lv_subject_set_float(&charge_amps_a, 32.0f);
     lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
 
     ESP_LOGI(TAG, "Embedded assets id=%s dial=%dx%d needle=%dx%d (dial=%u B needle=%u B)",
@@ -112,9 +79,11 @@ void app_main(void)
     lv_screen_load(screen_main_create());
     bsp_display_unlock();
 
-    lv_timer_create(demo_speed_timer_cb, 50, NULL);
-
     dashboard_buttons_init();
 
-    ESP_LOGI(TAG, "UI loaded (panel=GPIO2 trip_reset=GPIO3; set sys_state=SYS_CHARGE to test panel 4)");
+    if(zv_can_init() != ESP_OK) {
+        ESP_LOGW(TAG, "ZombieVerter CAN init failed — gauges stay at defaults until TWAI is wired");
+    }
+
+    ESP_LOGI(TAG, "UI loaded (CAN: GPIO4=TX GPIO5=RX; panel=GPIO2 trip_reset=GPIO3)");
 }

@@ -24,7 +24,7 @@
 #define INFO_GAUGE_H        264
 
 #define INFO_ARC_SIZE       210
-#define INFO_ARC_WIDTH      25
+#define INFO_ARC_WIDTH      10
 #define INFO_ARC_START_DEG  160
 #define INFO_ARC_END_DEG    20
 
@@ -38,10 +38,10 @@
 /* Layout offsets from dial centre (px) */
 #define MAIN_VALUE_Y        (-50)
 #define MAIN_TITLE_Y        (-25)
-#define SUB_LEFT_X          (0)
-#define SUB_RIGHT_X         50
-#define SUB_ROW_Y           40
-#define SUB_BOTTOM_Y        88
+#define SUB_LEFT_X          (-40)
+#define SUB_RIGHT_X         40
+#define SUB_ROW_Y           18
+#define SUB_BOTTOM_Y        65
 #define SUB_RING_SIZE       56
 
 /**********************
@@ -176,9 +176,9 @@ static void info_gauge_refresh(void)
 
     switch(panel) {
         case INFO_PANEL_PACK_VOLTAGE:
-            lv_snprintf(buf, sizeof(buf), "%.0fv", (double)lv_subject_get_float(&battery_voltage_v));
+            lv_snprintf(buf, sizeof(buf), "%.0f", (double)lv_subject_get_float(&battery_voltage_v));
             lv_label_set_text(s_ui.main_value, buf);
-            lv_label_set_text(s_ui.main_title, "Pack Voltage");
+            lv_label_set_text(s_ui.main_title, "Pack Voltage V");
 
             lv_snprintf(buf, sizeof(buf), "%d°", lv_subject_get_int(&batt_temp_c));
             lv_label_set_text(s_ui.sub_left_val, buf);
@@ -195,9 +195,9 @@ static void info_gauge_refresh(void)
             break;
 
         case INFO_PANEL_CELL_BALANCE:
-            lv_snprintf(buf, sizeof(buf), "%dmV", lv_subject_get_int(&cell_balance_mv));
+            lv_snprintf(buf, sizeof(buf), "%d", lv_subject_get_int(&cell_balance_mv));
             lv_label_set_text(s_ui.main_value, buf);
-            lv_label_set_text(s_ui.main_title, "Cell Balance");
+            lv_label_set_text(s_ui.main_title, "Cell Balance mV");
 
             lv_snprintf(buf, sizeof(buf), "%d°", lv_subject_get_int(&batt_temp_c));
             lv_label_set_text(s_ui.sub_left_val, buf);
@@ -214,9 +214,9 @@ static void info_gauge_refresh(void)
             break;
 
         case INFO_PANEL_EFFICIENCY:
-            lv_snprintf(buf, sizeof(buf), "%dWh/km", lv_subject_get_int(&efficiency_wh_per_km));
+            lv_snprintf(buf, sizeof(buf), "%d", lv_subject_get_int(&efficiency_wh_per_km));
             lv_label_set_text(s_ui.main_value, buf);
-            lv_label_set_text(s_ui.main_title, "Efficiency");
+            lv_label_set_text(s_ui.main_title, "Efficiency Wh/km");
 
             lv_snprintf(buf, sizeof(buf), "%d°", lv_subject_get_int(&batt_temp_c));
             lv_label_set_text(s_ui.sub_left_val, buf);
@@ -233,9 +233,9 @@ static void info_gauge_refresh(void)
             break;
 
         case INFO_PANEL_CHARGING:
-            lv_snprintf(buf, sizeof(buf), "%d%%", lv_subject_get_int(&state_of_charge_pct));
+            lv_snprintf(buf, sizeof(buf), "%d", lv_subject_get_int(&state_of_charge_pct));
             lv_label_set_text(s_ui.main_value, buf);
-            lv_label_set_text(s_ui.main_title, "Charging");
+            lv_label_set_text(s_ui.main_title, "Charging %");
 
             lv_snprintf(buf, sizeof(buf), "%d°", lv_subject_get_int(&batt_temp_c));
             lv_label_set_text(s_ui.sub_left_val, buf);
@@ -328,13 +328,13 @@ lv_obj_t * info_gauge_create(lv_obj_t * parent)
     lv_obj_align(mask_img, LV_ALIGN_CENTER, 0, 0);
 
     s_ui.main_value = lv_label_create(cont);
-    lv_label_set_text(s_ui.main_value, "350v");
+    lv_label_set_text(s_ui.main_value, "350");
     lv_obj_set_style_text_font(s_ui.main_value, font_heading, 0);
     lv_obj_set_style_text_color(s_ui.main_value, COLOR_TEXT_HI, 0);
     lv_obj_align(s_ui.main_value, LV_ALIGN_CENTER, 0, MAIN_VALUE_Y);
 
     s_ui.main_title = lv_label_create(cont);
-    lv_label_set_text(s_ui.main_title, "Pack Voltage");
+    lv_label_set_text(s_ui.main_title, "Pack Voltage V");
     lv_obj_set_style_text_font(s_ui.main_title, font_small, 0);
     lv_obj_set_style_text_color(s_ui.main_title, COLOR_TEXT_MID, 0);
     lv_obj_align(s_ui.main_title, LV_ALIGN_CENTER, 0, MAIN_TITLE_Y);

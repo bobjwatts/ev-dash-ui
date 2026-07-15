@@ -7,6 +7,7 @@
  */
 
 #include "dashboard_buttons.h"
+#include "zv_can.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -19,6 +20,9 @@ static const char * TAG = "dash_btn";
 #define DASH_DEMO_PANEL_CYCLE_MS  0
 #define DASH_BTN_PANEL_GPIO       GPIO_NUM_2
 #define DASH_BTN_TRIP_RESET_GPIO  GPIO_NUM_3
+
+/** 1 = button cycles all 4 panels (incl. Charging) for bench test; 0 = production UX */
+#define DASH_INCLUDE_CHARGING_IN_CYCLE  1
 
 #define DEBOUNCE_MS        50
 #define POLL_MS            20
@@ -61,7 +65,11 @@ static bool btn_poll(btn_state_t * btn)
 
 static int info_panel_count(void)
 {
+#if DASH_INCLUDE_CHARGING_IN_CYCLE
+    return 4;
+#else
     return (lv_subject_get_int(&sys_state) == SYSSTATE_SYS_CHARGE) ? 4 : 3;
+#endif
 }
 
 static void advance_info_panel(void)
@@ -88,10 +96,12 @@ static void check_charging_transitions(void)
         }
     }
 
+#if !DASH_INCLUDE_CHARGING_IN_CYCLE
     if(st != SYSSTATE_SYS_CHARGE &&
        lv_subject_get_int(&info_panel) >= info_panel_count()) {
         lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
     }
+#endif
 
     s_prev_sys_state = st;
 }
@@ -106,10 +116,7 @@ static void btn_timer_cb(lv_timer_t * timer)
         advance_info_panel();
     }
     if(btn_poll(&s_trip_btn)) {
-        lv_subject_set_int(&trip_km, 0);
-        lv_subject_set_int(&trip_wh_used, 0);
-        lv_subject_set_int(&efficiency_wh_per_km, 0);
-        ESP_LOGI(TAG, "trip reset");
+        dashboard_trip_reset();
     }
 }
 
@@ -123,9 +130,7 @@ static void demo_panel_timer_cb(lv_timer_t * timer)
 
 void dashboard_trip_reset(void)
 {
-    lv_subject_set_int(&trip_km, 0);
-    lv_subject_set_int(&trip_wh_used, 0);
-    lv_subject_set_int(&efficiency_wh_per_km, 0);
+    zv_can_trip_reset();
     ESP_LOGI(TAG, "trip reset");
 }
 

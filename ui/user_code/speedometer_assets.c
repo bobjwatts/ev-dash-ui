@@ -2,7 +2,6 @@
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
-static const char * SM_ASSETS_TAG = "sm_assets";
 #endif
 
 static int image_scale_to_fit(int src_px, int target_px)
@@ -119,7 +118,7 @@ void speedometer_debug_log_dial_layout(lv_obj_t * speedometer)
     lv_obj_get_coords(speedometer, &parent_coords);
     lv_image_get_pivot(dial_img, &pivot);
 #ifdef ESP_PLATFORM
-    ESP_LOGI(SM_ASSETS_TAG,
+    ESP_LOGI("sm_assets",
              "dial img (%d,%d)-(%d,%d) parent (%d,%d)-(%d,%d) scale=%d pivot=(%d,%d)",
              (int)img_coords.x1, (int)img_coords.y1, (int)img_coords.x2, (int)img_coords.y2,
              (int)parent_coords.x1, (int)parent_coords.y1, (int)parent_coords.x2, (int)parent_coords.y2,

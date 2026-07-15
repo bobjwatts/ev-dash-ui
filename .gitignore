@@ -60,6 +60,11 @@ firmware/sdkconfig
 firmware/sdkconfig.old
 firmware/.sdkconfig.*
 
+# ESP-IDF bench CAN simulator (tools/zv_can_bench_sim/)
+tools/zv_can_bench_sim/build/
+tools/zv_can_bench_sim/sdkconfig
+tools/zv_can_bench_sim/sdkconfig.old
+
 # Local sdkconfig fragments (keep sdkconfig.defaults tracked)
 firmware/sdkconfig.ci
 firmware/sdkconfig.user
