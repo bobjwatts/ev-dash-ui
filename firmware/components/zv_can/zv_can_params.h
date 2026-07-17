@@ -27,3 +27,12 @@
 #define ZV_PARAM_BMS_VMAX      2085
 #define ZV_PARAM_BMS_TMAX      2087
 #define ZV_PARAM_CCS_I         2054
+
+/* Remapped 11-bit CAN IDs for spot params whose id > 2047 (stock VCU CanMap limit). */
+#define ZV_STD_CAN_HOUR       1800
+#define ZV_STD_CAN_MIN        1801
+#define ZV_STD_CAN_U12V       1802
+#define ZV_STD_CAN_BMS_VMIN   1803
+#define ZV_STD_CAN_BMS_VMAX   1804
+#define ZV_STD_CAN_BMS_TMAX   1805
+#define ZV_STD_CAN_CCS_I      1806

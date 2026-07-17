@@ -11,7 +11,8 @@ extern "C" {
 
 /**
  * Start TWAI (GPIO 4 TX / GPIO 5 RX, 500 kbps) and an LVGL timer that maps
- * received spot values into dashboard subjects. Call after the UI is loaded.
+ * received packed (0x500..0x509) and spot values into dashboard subjects.
+ * Call after the UI is loaded.
  */
 esp_err_t zv_can_init(void);
 

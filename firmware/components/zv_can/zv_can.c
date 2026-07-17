@@ -4,12 +4,14 @@
  * Hardware: SN65HVD230 3.3 V transceiver on TWAI (500 kbps).
  *   TX = GPIO 4, RX = GPIO 5  (ESP32-P4 Function EV Board J1 pins 18 / 16)
  *
- * Decodes OpenInverter spot-value broadcasts (CAN ID 0x02A0000 + param_id,
- * 32-bit big-endian fixed-point ÷ 32). Updates LVGL subjects from an lv_timer
- * so observer callbacks run on the LVGL thread.
+ * Decodes OpenInverter telemetry:
+ *   Packed CanMap (preferred): CAN ID 0x500..0x509, two spot32 BE fields per frame
+ *   Spot broadcasts: extended 0x02A0000+param_id or standard param/remap ids
+ * Updates LVGL subjects from an lv_timer so observer callbacks run on the LVGL thread.
  */
 
 #include "zv_can.h"
+#include "zv_can_pack.h"
 #include "zv_can_params.h"
 
 #include "esp_log.h"
@@ -88,6 +90,7 @@ typedef struct {
 
     uint32_t rx_frames;
     uint32_t rx_spot_frames;
+    uint32_t rx_pack_frames;
     int64_t  last_rx_us;
 } zv_snapshot_t;
 
@@ -113,18 +116,36 @@ static float s_trip_wh;
 #define ZV_EFF_MIN_POWER_KW   0.05f
 #define ZV_EFF_MAX_WH_KM      300
 
-static float decode_spot32(const uint8_t *data)
+#define ZV_REGEN_DEADBAND_KW  0.5f
+#define ZV_REGEN_LEVEL1_KW    8.0f
+#define ZV_REGEN_LEVEL2_KW    18.0f
+
+static int zv_power_to_regen_level(float power_kw)
 {
-    int32_t raw = (int32_t)(((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
-                            ((uint32_t)data[2] << 8) | (uint32_t)data[3]);
-    return (float)raw / 32.0f;
+    if(power_kw >= -ZV_REGEN_DEADBAND_KW) {
+        return 0;
+    }
+
+    float regen_kw = -power_kw;
+    if(regen_kw < ZV_REGEN_LEVEL1_KW) {
+        return 1;
+    }
+    if(regen_kw < ZV_REGEN_LEVEL2_KW) {
+        return 2;
+    }
+    return 3;
 }
 
-static int32_t decode_spot32_int(const uint8_t *data)
+static const char *zv_gear_to_str(int gear_pos)
 {
-    int32_t raw = (int32_t)(((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
-                            ((uint32_t)data[2] << 8) | (uint32_t)data[3]);
-    return raw / 32;
+    switch(gear_pos) {
+        case GEARPOSITION_GEAR_PARK:    return "P";
+        case GEARPOSITION_GEAR_REVERSE:  return "R";
+        case GEARPOSITION_GEAR_NEUTRAL: return "N";
+        case GEARPOSITION_GEAR_DRIVE:   return "D";
+        case GEARPOSITION_GEAR_BRAKE:   return "B";
+        default:                        return "?";
+    }
 }
 
 static int zv_opmode_to_sys_state(int32_t opmode)
@@ -256,24 +277,91 @@ static void snapshot_apply_param(zv_snapshot_t *snap, uint16_t param_id, float v
     }
 }
 
-static void handle_spot_frame(zv_snapshot_t *snap, uint32_t can_id, const uint8_t *data, uint8_t dlc)
+static bool zv_resolve_spot_param(uint32_t can_id, uint16_t *param_id_out)
+{
+    if((can_id & ZV_CAN_BROADCAST_MASK) == ZV_CAN_BROADCAST_PREFIX) {
+        *param_id_out = (uint16_t)(can_id & 0xFFFFU);
+        return true;
+    }
+
+    if(can_id > 0x7FFU) {
+        return false;
+    }
+
+    switch((uint16_t)can_id) {
+        case ZV_STD_CAN_HOUR:     *param_id_out = ZV_PARAM_HOUR;     return true;
+        case ZV_STD_CAN_MIN:      *param_id_out = ZV_PARAM_MIN;      return true;
+        case ZV_STD_CAN_U12V:     *param_id_out = ZV_PARAM_U12V;     return true;
+        case ZV_STD_CAN_BMS_VMIN: *param_id_out = ZV_PARAM_BMS_VMIN; return true;
+        case ZV_STD_CAN_BMS_VMAX: *param_id_out = ZV_PARAM_BMS_VMAX; return true;
+        case ZV_STD_CAN_BMS_TMAX: *param_id_out = ZV_PARAM_BMS_TMAX; return true;
+        case ZV_STD_CAN_CCS_I:    *param_id_out = ZV_PARAM_CCS_I;    return true;
+        default:
+            break;
+    }
+
+    /* VCU CanMap: spot param id as 11-bit standard CAN id (2000–2047 range). */
+    if(can_id >= 2000U && can_id <= 2047U) {
+        *param_id_out = (uint16_t)can_id;
+        return true;
+    }
+
+    return false;
+}
+
+static void snapshot_apply_spot_field(zv_snapshot_t *snap, uint16_t param_id, const uint8_t *data,
+                                    zv_pack_val_kind_t kind)
+{
+    if(param_id == ZV_PACK_PARAM_NONE) {
+        return;
+    }
+
+    if(kind == ZV_PACK_VAL_INT || param_id == ZV_PARAM_DIR) {
+        snapshot_apply_param(snap, param_id, (float)zv_unpack_spot_int(data));
+    } else {
+        snapshot_apply_param(snap, param_id, zv_unpack_spot_float(data));
+    }
+}
+
+static void handle_spot_frame(zv_snapshot_t *snap, uint16_t param_id, const uint8_t *data, uint8_t dlc)
 {
     if(dlc < 4) {
         return;
     }
-    if((can_id & ZV_CAN_BROADCAST_MASK) != ZV_CAN_BROADCAST_PREFIX) {
+
+    snap->rx_spot_frames++;
+    snap->last_rx_us = esp_timer_get_time();
+    snapshot_apply_spot_field(snap, param_id, data,
+                              (param_id == ZV_PARAM_DIR) ? ZV_PACK_VAL_INT : ZV_PACK_VAL_FLOAT);
+}
+
+static void handle_packed_frame(zv_snapshot_t *snap, uint32_t can_id, const uint8_t *data, uint8_t dlc)
+{
+    const zv_pack_frame_def_t *def;
+
+    if(dlc < 8) {
         return;
     }
 
-    uint16_t param_id = (uint16_t)(can_id & 0xFFFFU);
-    float val = decode_spot32(data);
-    snap->rx_spot_frames++;
-    snap->last_rx_us = esp_timer_get_time();
-    if(param_id == ZV_PARAM_DIR) {
-        snapshot_set_i32(&snap->dir, &snap->have_dir, decode_spot32_int(data));
-    } else {
-        snapshot_apply_param(snap, param_id, val);
+    def = zv_pack_frame_for_id(can_id);
+    if(def == NULL) {
+        return;
     }
+
+    snap->rx_pack_frames++;
+    snap->last_rx_us = esp_timer_get_time();
+    snapshot_apply_spot_field(snap, def->param_a, data, def->kind_a);
+    snapshot_apply_spot_field(snap, def->param_b, data + 4, def->kind_b);
+}
+
+static void handle_spot_can_id(zv_snapshot_t *snap, uint32_t can_id, const uint8_t *data, uint8_t dlc)
+{
+    uint16_t param_id;
+
+    if(!zv_resolve_spot_param(can_id, &param_id)) {
+        return;
+    }
+    handle_spot_frame(snap, param_id, data, dlc);
 }
 
 static bool IRAM_ATTR zv_on_rx_done(twai_node_handle_t handle, const twai_rx_done_event_data_t *edata,
@@ -328,6 +416,7 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
 
     if(local.have_power) {
         lv_subject_set_float(&power_kw, local.power_kw);
+        lv_subject_set_int(&regen_level, zv_power_to_regen_level(local.power_kw));
     }
 
     if(local.have_soc) {
@@ -410,7 +499,9 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
     }
 
     if(local.have_dir) {
-        lv_subject_set_int(&gear, zv_dir_to_gear(local.dir));
+        int gear_pos = zv_dir_to_gear(local.dir);
+        lv_subject_set_int(&gear, gear_pos);
+        lv_subject_copy_string(&gear_str, zv_gear_to_str(gear_pos));
     }
 
     if(local.have_veh_speed || local.have_power) {
@@ -453,8 +544,10 @@ static void zv_can_rx_task(void *arg)
 
         if(xSemaphoreTake(s_ctx.snap_mtx, pdMS_TO_TICKS(10)) == pdTRUE) {
             s_ctx.snap.rx_frames++;
-            if(frame->header.ide) {
-                handle_spot_frame(&s_ctx.snap, frame->header.id, frame->buffer, (uint8_t)dlc);
+            if(zv_pack_can_id_valid(frame->header.id)) {
+                handle_packed_frame(&s_ctx.snap, frame->header.id, frame->buffer, (uint8_t)dlc);
+            } else {
+                handle_spot_can_id(&s_ctx.snap, frame->header.id, frame->buffer, (uint8_t)dlc);
             }
             xSemaphoreGive(s_ctx.snap_mtx);
         }
@@ -466,8 +559,9 @@ static void zv_can_rx_task(void *arg)
         if((now - last_log_us) > 10 * 1000000LL) {
             last_log_us = now;
             if(xSemaphoreTake(s_ctx.snap_mtx, pdMS_TO_TICKS(10)) == pdTRUE) {
-                ESP_LOGI(TAG, "rx=%lu spot=%lu last_spot=%lld ms ago",
+                ESP_LOGI(TAG, "rx=%lu pack=%lu spot=%lu last=%lld ms ago",
                          (unsigned long)s_ctx.snap.rx_frames,
+                         (unsigned long)s_ctx.snap.rx_pack_frames,
                          (unsigned long)s_ctx.snap.rx_spot_frames,
                          (long long)((now - s_ctx.snap.last_rx_us) / 1000));
                 xSemaphoreGive(s_ctx.snap_mtx);
@@ -548,7 +642,7 @@ esp_err_t zv_can_init(void)
 
     lv_timer_create(zv_can_apply_timer_cb, ZV_CAN_APPLY_MS, NULL);
 
-    ESP_LOGI(TAG, "TWAI %d bps TX=GPIO%d RX=GPIO%d — listening for 0x02A0xxxx spot broadcasts",
+    ESP_LOGI(TAG, "TWAI %d bps TX=GPIO%d RX=GPIO%d — packed 0x500..0x509 + spot IDs",
              ZV_CAN_BITRATE_HZ, (int)ZV_CAN_TX_GPIO, (int)ZV_CAN_RX_GPIO);
     return ESP_OK;
 }
