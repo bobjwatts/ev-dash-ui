@@ -47,6 +47,8 @@ lv_font_t * font_display;
 extern lv_font_t font_display_data;
 lv_font_t * font_heading;
 extern lv_font_t font_heading_data;
+lv_font_t * font_subhead;
+extern lv_font_t font_subhead_data;
 lv_font_t * font_body;
 extern lv_font_t font_body_data;
 lv_font_t * font_small;
@@ -57,21 +59,14 @@ extern lv_font_t font_small_data;
  *----------------*/
 
 const void * dial_speed_needle;
-extern const void * dial_speed_needle_data;
+extern const lv_image_dsc_t dial_speed_needle_data;
 const void * dial_speed_dial;
-extern const void * dial_speed_dial_data;
+extern const lv_image_dsc_t dial_speed_dial_data;
 const void * dial_speed_arc_mask;
-extern const lv_image_dsc_t dial_speed_arc_mask_data;
-const void * background;
-extern const void * background_data;
 const void * small_dial_face;
-extern const void * small_dial_face_data;
 const void * small_dial_arc_mask;
-extern const void * small_dial_arc_mask_data;
 const void * small_dial_needle_green;
-extern const void * small_dial_needle_green_data;
 const void * small_dial_needle_yellow;
-extern const void * small_dial_needle_yellow_data;
 
 /*----------------
  * Global styles
@@ -97,21 +92,23 @@ lv_subject_t motor_rpm;
 lv_subject_t odometer_km;
 lv_subject_t trip_km;
 lv_subject_t range_est_km;
-lv_subject_t sys_state;
-lv_subject_t fault_code;
-lv_subject_t dark_theme;
-lv_subject_t speed_needle_angle;
-lv_subject_t power_needle_angle;
 lv_subject_t hour;
 lv_subject_t minute;
 lv_subject_t blinker_left;
 lv_subject_t blinker_right;
 lv_subject_t info_panel;
 lv_subject_t cell_balance_mv;
+lv_subject_t state_of_health_pct;
+lv_subject_t cell_health_ready;
 lv_subject_t efficiency_wh_per_km;
 lv_subject_t trip_wh_used;
 lv_subject_t aux_voltage_v;
 lv_subject_t charge_amps_a;
+lv_subject_t sys_state;
+lv_subject_t fault_code;
+lv_subject_t dark_theme;
+lv_subject_t speed_needle_angle;
+lv_subject_t power_needle_angle;
 
 /**********************
  *      MACROS
@@ -123,7 +120,7 @@ lv_subject_t charge_amps_a;
 
 void ev_dash_init_gen(const char * asset_path)
 {
-    LV_UNUSED(asset_path);
+    char buf[256];
 
 
     /*----------------
@@ -134,6 +131,8 @@ void ev_dash_init_gen(const char * asset_path)
     font_display = &font_display_data;
     /* get font 'font_heading' from a C array */
     font_heading = &font_heading_data;
+    /* get font 'font_subhead' from a C array */
+    font_subhead = &font_subhead_data;
     /* get font 'font_body' from a C array */
     font_body = &font_body_data;
     /* get font 'font_small' from a C array */
@@ -145,12 +144,6 @@ void ev_dash_init_gen(const char * asset_path)
      *----------------*/
     dial_speed_needle = &dial_speed_needle_data;
     dial_speed_dial = &dial_speed_dial_data;
-    dial_speed_arc_mask = &dial_speed_arc_mask_data;
-    background = &background_data;
-    small_dial_face = &small_dial_face_data;
-    small_dial_arc_mask = &small_dial_arc_mask_data;
-    small_dial_needle_green = &small_dial_needle_green_data;
-    small_dial_needle_yellow = &small_dial_needle_yellow_data;
 
     /*----------------
      * Global styles
@@ -182,21 +175,23 @@ void ev_dash_init_gen(const char * asset_path)
     lv_subject_init_int(&odometer_km, 0);
     lv_subject_init_int(&trip_km, 0);
     lv_subject_init_int(&range_est_km, 0);
-    lv_subject_init_int(&sys_state, 1);
-    lv_subject_init_int(&fault_code, 0);
-    lv_subject_init_int(&dark_theme, 0);
-    lv_subject_init_int(&speed_needle_angle, -1090);
-    lv_subject_init_int(&power_needle_angle, 0);
     lv_subject_init_int(&hour, 0);
     lv_subject_init_int(&minute, 0);
     lv_subject_init_int(&blinker_left, 0);
     lv_subject_init_int(&blinker_right, 0);
     lv_subject_init_int(&info_panel, 0);
     lv_subject_init_int(&cell_balance_mv, 0);
+    lv_subject_init_int(&state_of_health_pct, 0);
+    lv_subject_init_int(&cell_health_ready, 0);
     lv_subject_init_int(&efficiency_wh_per_km, 0);
     lv_subject_init_int(&trip_wh_used, 0);
-    lv_subject_init_float(&aux_voltage_v, 0.0f);
-    lv_subject_init_float(&charge_amps_a, 0.0f);
+    lv_subject_init_float(&aux_voltage_v, 0.0);
+    lv_subject_init_float(&charge_amps_a, 0.0);
+    lv_subject_init_int(&sys_state, 4);
+    lv_subject_init_int(&fault_code, 0);
+    lv_subject_init_int(&dark_theme, 0);
+    lv_subject_init_int(&speed_needle_angle, -1090);
+    lv_subject_init_int(&power_needle_angle, 0);
 
     /*----------------
      * Translations
@@ -208,6 +203,7 @@ void ev_dash_init_gen(const char * asset_path)
     /* Register fonts */
     lv_xml_register_font(NULL, "font_display", font_display);
     lv_xml_register_font(NULL, "font_heading", font_heading);
+    lv_xml_register_font(NULL, "font_subhead", font_subhead);
     lv_xml_register_font(NULL, "font_body", font_body);
     lv_xml_register_font(NULL, "font_small", font_small);
 
@@ -228,10 +224,23 @@ void ev_dash_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "odometer_km", &odometer_km);
     lv_xml_register_subject(NULL, "trip_km", &trip_km);
     lv_xml_register_subject(NULL, "range_est_km", &range_est_km);
+    lv_xml_register_subject(NULL, "hour", &hour);
+    lv_xml_register_subject(NULL, "minute", &minute);
+    lv_xml_register_subject(NULL, "blinker_left", &blinker_left);
+    lv_xml_register_subject(NULL, "blinker_right", &blinker_right);
+    lv_xml_register_subject(NULL, "info_panel", &info_panel);
+    lv_xml_register_subject(NULL, "cell_balance_mv", &cell_balance_mv);
+    lv_xml_register_subject(NULL, "state_of_health_pct", &state_of_health_pct);
+    lv_xml_register_subject(NULL, "cell_health_ready", &cell_health_ready);
+    lv_xml_register_subject(NULL, "efficiency_wh_per_km", &efficiency_wh_per_km);
+    lv_xml_register_subject(NULL, "trip_wh_used", &trip_wh_used);
+    lv_xml_register_subject(NULL, "aux_voltage_v", &aux_voltage_v);
+    lv_xml_register_subject(NULL, "charge_amps_a", &charge_amps_a);
     lv_xml_register_subject(NULL, "sys_state", &sys_state);
     lv_xml_register_subject(NULL, "fault_code", &fault_code);
     lv_xml_register_subject(NULL, "dark_theme", &dark_theme);
     lv_xml_register_subject(NULL, "speed_needle_angle", &speed_needle_angle);
+    lv_xml_register_subject(NULL, "power_needle_angle", &power_needle_angle);
 
     /* Register callbacks */
 #endif
@@ -242,11 +251,6 @@ void ev_dash_init_gen(const char * asset_path)
     /* Register images */
     lv_xml_register_image(NULL, "dial_speed_needle", dial_speed_needle);
     lv_xml_register_image(NULL, "dial_speed_dial", dial_speed_dial);
-    lv_xml_register_image(NULL, "background", background);
-    lv_xml_register_image(NULL, "small_dial_face", small_dial_face);
-    lv_xml_register_image(NULL, "small_dial_arc_mask", small_dial_arc_mask);
-    lv_xml_register_image(NULL, "small_dial_needle_green", small_dial_needle_green);
-    lv_xml_register_image(NULL, "small_dial_needle_yellow", small_dial_needle_yellow);
 #endif
 
 #if LV_USE_XML == 0

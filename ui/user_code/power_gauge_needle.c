@@ -6,11 +6,10 @@
 #include "ev_dash_gen.h"
 #include "power_gauge_needle.h"
 
-/* Arc: 120° (−160 kW) → 270° (0 kW) → 60° (+160 kW), 300° total sweep.
- * Needle rotation 0 = 12 o'clock. At 0 kW → arc angle 270° → rotation = 0°.
- * At ±160 kW → ±150° = ±1500 decideg.                                       */
-#define POWER_ANGLE_MIN_DECIDEG   (-1100)
-#define POWER_ANGLE_MAX_DECIDEG   1100
+/* Needle sweep: −110° (regen, left) ↔ 0° (centre) ↔ +110° (motoring, right).
+ * power_kw: + = discharge/pull, − = regen (matches globals.xml / zv_can).     */
+#define POWER_ANGLE_MIN_DECIDEG   (-1100)   /* regen side — lower-left  */
+#define POWER_ANGLE_MAX_DECIDEG    1100     /* motoring side — lower-right */
 #define POWER_KW_MIN              (-160.0f)
 #define POWER_KW_MAX              160.0f
 

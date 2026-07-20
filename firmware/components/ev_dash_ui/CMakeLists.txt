@@ -12,6 +12,7 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/fonts/font_body_data.c
     ${UI_DIR}/fonts/font_display_data.c
     ${UI_DIR}/fonts/font_heading_data.c
+    ${UI_DIR}/fonts/font_subhead_data.c
     ${UI_DIR}/fonts/font_small_data.c
     ${UI_DIR}/images/background_data.c
     ${UI_DIR}/images/dial_speed_arc_mask_data.c
@@ -24,6 +25,8 @@ set(EV_DASH_UI_SOURCES
     ${UI_DIR}/screens/screen_main_gen.c
     ${UI_DIR}/components/info_gauge/info_gauge_gen.c
     ${UI_DIR}/components/top_bar/top_bar_gen.c
+    ${UI_DIR}/user_code/ev_dash_typography.c
+    ${UI_DIR}/user_code/bms_cell_health.c
     ${UI_DIR}/user_code/blinker.c
     ${UI_DIR}/user_code/lvgl_compat.c
     ${UI_DIR}/user_code/power_gauge_needle.c

@@ -45,7 +45,7 @@ lv_obj_t * gauge_center_readout_create(lv_obj_t * parent, lv_subject_t * value, 
         lv_style_set_text_color(&value_text, COLOR_TEXT_HI);
 
         lv_style_init(&unit_text);
-        lv_style_set_text_font(&unit_text, font_body);
+        lv_style_set_text_font(&unit_text, font_subhead);
         lv_style_set_text_color(&unit_text, COLOR_TEXT_MID);
 
         style_inited = true;

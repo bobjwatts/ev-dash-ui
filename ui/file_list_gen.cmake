@@ -3,8 +3,6 @@ list(
   APPEND
   LV_EDITOR_PROJECT_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/components/gauge_center_readout/gauge_center_readout_gen.c
-  ${CMAKE_CURRENT_LIST_DIR}/components/power_gauge/power_gauge_gen.c
-  ${CMAKE_CURRENT_LIST_DIR}/components/soc_gauge/soc_gauge_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/components/speed_scale_ring/speed_scale_ring_fine_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/components/speed_scale_ring/speed_scale_ring_gen.c
   ${CMAKE_CURRENT_LIST_DIR}/components/speedometer/speedometer_gen.c
@@ -14,13 +12,7 @@ list(
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_display_data.c
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_heading_data.c
   ${CMAKE_CURRENT_LIST_DIR}/fonts/font_small_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/background_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_arc_mask_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/fonts/font_subhead_data.c
   ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_dial_data.c
   ${CMAKE_CURRENT_LIST_DIR}/images/dial_speed_needle_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/small_dial_face_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/small_dial_arc_mask_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/small_dial_needle_green_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/images/small_dial_needle_yellow_data.c
-  ${CMAKE_CURRENT_LIST_DIR}/screens/screen_main_gen.c
-  ${CMAKE_CURRENT_LIST_DIR}/user_code/power_gauge_needle.c)
+  ${CMAKE_CURRENT_LIST_DIR}/screens/screen_main_gen.c)

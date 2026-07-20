@@ -8,10 +8,9 @@
  *   3. Yellow active arc          (bg_angles 270°→60°, fills CW when power_kw > 0)
  *   4. Green active arc           (bg_angles 120°→270°, REVERSE, fills CCW when power_kw < 0)
  *   5. small_dial_speed_arc_mask.png  (214×214 tick-gap overlay)
- *   6. Scale labels               (−160, −80, 0, +80, +160 kW)
- *   7. Needle                     (10×68 px, green/yellow, pivot at image bottom = dial centre)
- *   8. Centre readout             (power kW large, odometer km small)
- *   9. Temperature arc            (motor_temp_c, bottom gap, colour-coded)
+ *   6. Needle                     (10×68 px; yellow motoring/right, green regen/left)
+ *   7. Centre readout             (|kW| large, odometer km small)
+ *   8. Temperature arc            (motor_temp_c; blue → orange → red, E→F fill)
  *
  * Arc geometry (LVGL: 0° = 3 o'clock, increasing CW):
  *   Arc range: 120° (−160 kW, lower-left) → 270° (0 kW, top) → 60° (+160 kW, lower-right)
@@ -28,7 +27,6 @@
 
 #include "power_gauge_gen.h"
 #include "../../ev_dash.h"
-#include <math.h>
 #include <limits.h>
 
 /*********************
@@ -60,30 +58,23 @@
  * the speedometer where ARM_PX=191 > image_h=123. */
 #define POWER_GAUGE_NEEDLE_ARM_PX 105   /* ~80% of dial radius (132 px) */
 
-/* Scale labels — radius from container centre */
-#define POWER_LABEL_RADIUS        88
-#define POWER_LABEL_COUNT         5
-
 /* kW range */
 #define POWER_KW_MIN              (-160)
 #define POWER_KW_MAX              160
 
-/* Temperature arc — same gap geometry as SOC on the speedometer */
+/* Temperature arc — bottom gap (same geometry as SOC on speedometer).
+ * Fills left (cold) → right (hot). Colour: blue → orange → red.          */
 #define TEMP_ARC_SIZE             210
 #define TEMP_ARC_WIDTH            8
-#define TEMP_ARC_START_DEG        61
-#define TEMP_ARC_END_DEG          119
-#define TEMP_RANGE_MAX            150   /* °C */
-#define TEMP_WARM_C               80
-#define TEMP_HOT_C                100
-#define TEMP_COLD_C               40
+#define TEMP_ARC_START_DEG        61    /* F end — lower-right of gap */
+#define TEMP_ARC_END_DEG          119   /* E end — lower-left of gap  */
+#define TEMP_RANGE_MAX            150   /* °C — arc full scale      */
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 
 static void power_arc_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void power_label_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void power_kw_label_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void power_needle_color_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void temp_arc_cb(lv_observer_t * observer, lv_subject_t * subject);
@@ -123,7 +114,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_remove_flag(bg_arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(bg_arc, LV_OPA_TRANSP, 0);
     lv_obj_set_style_arc_width(bg_arc, POWER_ARC_WIDTH, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(bg_arc, COLOR_WHITE, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(bg_arc, COLOR_GREY_DARK, LV_PART_MAIN);
     lv_obj_set_style_arc_rounded(bg_arc, false, LV_PART_MAIN);
     lv_obj_set_style_arc_opa(bg_arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(bg_arc, LV_OPA_TRANSP, LV_PART_KNOB);
@@ -182,29 +173,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_image_set_scale(mask_img, LV_SCALE_NONE);
     lv_obj_align(mask_img, LV_ALIGN_CENTER, 0, 0);
 
-    /* ── 6. Scale labels (−160, −80, 0, +80, +160 kW) ───────────── */
-    static const int power_label_vals[POWER_LABEL_COUNT] = { -160, -80, 0, 80, 160 };
-    static const char * power_label_strs[POWER_LABEL_COUNT] = { "-160", "-80", "0", "+80", "+160" };
-
-    for(int i = 0; i < POWER_LABEL_COUNT; i++) {
-        int v = power_label_vals[i];
-        /* angle = POWER_ARC_BG_START + (v - KW_MIN) / (KW_MAX - KW_MIN) * SWEEP */
-        float angle_deg = (float)POWER_ARC_BG_START +
-                          ((float)(v - POWER_KW_MIN) / (float)(POWER_KW_MAX - POWER_KW_MIN)) * (float)POWER_ARC_SWEEP;
-        float angle_rad = angle_deg * (3.14159265f / 180.0f);
-        int32_t x_ofs = (int32_t)(cosf(angle_rad) * (float)POWER_LABEL_RADIUS);
-        int32_t y_ofs = (int32_t)(sinf(angle_rad) * (float)POWER_LABEL_RADIUS);
-
-        lv_obj_t * lbl = lv_label_create(cont);
-        lv_label_set_text(lbl, power_label_strs[i]);
-        lv_obj_set_style_text_font(lbl, font_small, 0);
-        lv_obj_set_style_text_color(lbl, COLOR_WHITE, 0);
-        lv_obj_align(lbl, LV_ALIGN_CENTER, x_ofs, y_ofs);
-        lv_obj_set_user_data(lbl, (void *)(intptr_t)v);
-        lv_subject_add_observer_obj(power_kw, power_label_cb, lbl, NULL);
-    }
-
-    /* ── 7. Needle — pixel data served from PSRAM (cached at ev_dash_init) ── */
+    /* ── 6. Needle — pixel data served from PSRAM (cached at ev_dash_init) ── */
     lv_obj_t * needle_img = lv_image_create(cont);
     lv_image_set_src(needle_img, small_dial_needle_yellow);
     /* Match speedometer_image_set_1to1: explicit size + inner-align + 1:1 scale.
@@ -222,9 +191,9 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_bind_style_prop(needle_img, LV_STYLE_TRANSFORM_ROTATION, 0, needle_angle);
     lv_subject_add_observer_obj(power_kw, power_needle_color_cb, needle_img, NULL);
 
-    /* ── 8. Centre readout ───────────────────────────────────────── */
+    /* ── 7. Centre readout — magnitude only; sign shown by needle side/colour ── */
     lv_obj_t * lbl_power = lv_label_create(cont);
-    lv_label_set_text(lbl_power, "+0");
+    lv_label_set_text(lbl_power, "0");
     lv_obj_set_style_text_font(lbl_power, font_heading, 0);
     lv_obj_set_style_text_color(lbl_power, COLOR_TEXT_HI, 0);
     lv_obj_align(lbl_power, LV_ALIGN_CENTER, 0, -14);
@@ -234,32 +203,33 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
 
     lv_obj_t * lbl_kw_unit = lv_label_create(cont);
     lv_label_set_text(lbl_kw_unit, "kW");
-    lv_obj_set_style_text_font(lbl_kw_unit, font_small, 0);
+    lv_obj_set_style_text_font(lbl_kw_unit, font_body, 0);
     lv_obj_set_style_text_color(lbl_kw_unit, COLOR_TEXT_MID, 0);
     lv_obj_align(lbl_kw_unit, LV_ALIGN_CENTER, 0, 10);
 
     lv_obj_t * lbl_odo = lv_label_create(cont);
     lv_label_bind_text(lbl_odo, odometer_km, "%d km");
-    lv_obj_set_style_text_font(lbl_odo, font_small, 0);
+    lv_obj_set_style_text_font(lbl_odo, font_body, 0);
     lv_obj_set_style_text_color(lbl_odo, COLOR_TEXT_LO, 0);
     lv_obj_align(lbl_odo, LV_ALIGN_CENTER, 0, 30);
 
-    /* ── 9. Temperature arc (bottom gap, same geometry as SOC arc) ── */
+    /* ── 8. Temperature arc (bottom gap, same geometry as SOC arc) ── */
     lv_obj_t * temp_arc = lv_arc_create(cont);
     lv_obj_set_size(temp_arc, TEMP_ARC_SIZE, TEMP_ARC_SIZE);
     lv_obj_align(temp_arc, LV_ALIGN_CENTER, 0, 0);
     lv_obj_remove_flag(temp_arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(temp_arc, LV_OPA_TRANSP, 0);
     lv_obj_set_style_arc_width(temp_arc, TEMP_ARC_WIDTH, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(temp_arc, COLOR_GAUGE_TRACK, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(temp_arc, COLOR_GREY_DARK, LV_PART_MAIN);
     lv_obj_set_style_arc_rounded(temp_arc, false, LV_PART_MAIN);
     lv_obj_set_style_arc_width(temp_arc, TEMP_ARC_WIDTH, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(temp_arc, COLOR_GREEN, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(temp_arc, COLOR_BLUE, LV_PART_INDICATOR);
     lv_obj_set_style_arc_rounded(temp_arc, false, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(temp_arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_outline_width(temp_arc, 0, LV_PART_KNOB);
     lv_obj_set_style_pad_all(temp_arc, 0, LV_PART_KNOB);
     lv_arc_set_bg_angles(temp_arc, TEMP_ARC_START_DEG, TEMP_ARC_END_DEG);
+    lv_arc_set_mode(temp_arc, LV_ARC_MODE_REVERSE);   /* E (left) → F (right) as temp rises */
     lv_arc_set_range(temp_arc, 0, TEMP_RANGE_MAX);
     lv_arc_set_value(temp_arc, 0);
     lv_subject_add_observer_obj(motor_temp_c, temp_arc_cb, temp_arc, NULL);
@@ -269,7 +239,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_label_bind_text(lbl_temp, motor_temp_c, "%d°C");
     lv_obj_set_style_text_font(lbl_temp, font_small, 0);
     lv_obj_set_style_text_color(lbl_temp, COLOR_TEXT_MID, 0);
-    lv_obj_align(lbl_temp, LV_ALIGN_CENTER, 0, 105);
+    lv_obj_align(lbl_temp, LV_ALIGN_CENTER, 0, 80);
 
     LV_TRACE_OBJ_CREATE("finished");
     return cont;
@@ -299,35 +269,16 @@ static void power_arc_cb(lv_observer_t * observer, lv_subject_t * subject)
     lv_arc_set_value(arc, val);
 }
 
-static void power_label_cb(lv_observer_t * observer, lv_subject_t * subject)
-{
-    lv_obj_t * lbl    = (lv_obj_t *)lv_observer_get_target_obj(observer);
-    int threshold     = (int)(intptr_t)lv_obj_get_user_data(lbl);
-    float kw          = lv_subject_get_float(subject);
-    lv_color_t col;
-
-    if(threshold > 0) {
-        col = (kw >= (float)threshold) ? COLOR_GAUGE_ACTIVE : COLOR_WHITE;
-    } else if(threshold < 0) {
-        col = (kw <= (float)threshold) ? COLOR_GREEN : COLOR_WHITE;
-    } else {
-        /* 0 kW label — yellow when motoring, green when regen, white at rest */
-        if(kw > 0.5f)       col = COLOR_GAUGE_ACTIVE;
-        else if(kw < -0.5f) col = COLOR_GREEN;
-        else                 col = COLOR_WHITE;
-    }
-    lv_obj_set_style_text_color(lbl, col, 0);
-}
-
 static void power_kw_label_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     lv_obj_t * lbl  = (lv_obj_t *)lv_observer_get_target_obj(observer);
-    int kw_int      = (int)lv_subject_get_float(subject);
+    float kw        = lv_subject_get_float(subject);
+    int kw_disp     = (int)(kw >= 0.0f ? kw + 0.5f : -kw + 0.5f);
     int prev        = (int)(intptr_t)lv_obj_get_user_data(lbl);
-    if(kw_int == prev) return;   /* rounded integer unchanged — no text redraw */
-    lv_obj_set_user_data(lbl, (void *)(intptr_t)kw_int);
+    if(kw_disp == prev) return;
+    lv_obj_set_user_data(lbl, (void *)(intptr_t)kw_disp);
     char buf[8];
-    lv_snprintf(buf, sizeof(buf), "%+d", kw_int);
+    lv_snprintf(buf, sizeof(buf), "%d", kw_disp);
     lv_label_set_text(lbl, buf);
 }
 
@@ -336,7 +287,7 @@ static void power_needle_color_cb(lv_observer_t * observer, lv_subject_t * subje
     lv_obj_t * needle = (lv_obj_t *)lv_observer_get_target_obj(observer);
     float kw = lv_subject_get_float(subject);
     const void * new_src = (kw < 0.0f) ? small_dial_needle_green : small_dial_needle_yellow;
-    if(lv_image_get_src(needle) == new_src) return;   /* no change */
+    if(lv_image_get_src(needle) == new_src) return;
     lv_image_set_src(needle, new_src);
 }
 
@@ -347,9 +298,8 @@ static void temp_arc_cb(lv_observer_t * observer, lv_subject_t * subject)
     lv_arc_set_value(arc, temp < 0 ? 0 : (temp > TEMP_RANGE_MAX ? TEMP_RANGE_MAX : temp));
 
     lv_color_t col;
-    if(temp >= TEMP_HOT_C)       col = COLOR_DANGER;
-    else if(temp >= TEMP_WARM_C) col = COLOR_WARNING;
-    else if(temp >= TEMP_COLD_C) col = COLOR_GREEN;
-    else                          col = lv_color_hex(0x2244CC);  /* blue — cold motor */
+    if(temp >= TEMP_CRIT_C)       col = COLOR_DANGER;
+    else if(temp >= TEMP_WARN_C)  col = COLOR_WARNING;
+    else                           col = COLOR_BLUE;
     lv_obj_set_style_arc_color(arc, col, LV_PART_INDICATOR);
 }

@@ -13,7 +13,7 @@
 
 	<styles>
 		<style name="value_text" text_font="font_display" text_color="#COLOR_TEXT_HI" />
-		<style name="unit_text" text_font="font_body" text_color="#COLOR_TEXT_MID" />
+		<style name="unit_text" text_font="font_subhead" text_color="#COLOR_TEXT_MID" />
 	</styles>
 
 	<view width="200" height="100" style_bg_opa="0" style_border_width="0" scrollable="false">

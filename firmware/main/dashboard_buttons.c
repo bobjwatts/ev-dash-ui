@@ -12,6 +12,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "ev_dash_gen.h"
+#include "user_code/ev_dash_compat.h"
 #include "lvgl.h"
 
 static const char * TAG = "dash_btn";
@@ -21,7 +22,7 @@ static const char * TAG = "dash_btn";
 #define DASH_BTN_PANEL_GPIO       GPIO_NUM_2
 #define DASH_BTN_TRIP_RESET_GPIO  GPIO_NUM_3
 
-/** 1 = button cycles all 4 panels (incl. Charging) for bench test; 0 = production UX */
+/** 1 = button cycles all panels (incl. Charging + SOH) for bench test; 0 = production UX */
 #define DASH_INCLUDE_CHARGING_IN_CYCLE  1
 
 #define DEBOUNCE_MS        50
@@ -66,19 +67,38 @@ static bool btn_poll(btn_state_t * btn)
 static int info_panel_count(void)
 {
 #if DASH_INCLUDE_CHARGING_IN_CYCLE
-    return 4;
+    return 5;
 #else
-    return (lv_subject_get_int(&sys_state) == SYSSTATE_SYS_CHARGE) ? 4 : 3;
+    /* Charging panel only while charging; SOH always in the button cycle. */
+    return (lv_subject_get_int(&sys_state) == SYSSTATE_SYS_CHARGE) ? 5 : 4;
+#endif
+}
+
+static int next_info_panel(int panel)
+{
+#if DASH_INCLUDE_CHARGING_IN_CYCLE
+    return (panel + 1) % info_panel_count();
+#else
+    if(lv_subject_get_int(&sys_state) == SYSSTATE_SYS_CHARGE) {
+        return (panel + 1) % 5;
+    }
+    /* Drive: pack V → balance → efficiency → SOH (skip charging panel 3). */
+    switch(panel) {
+        case INFO_PANEL_PACK_VOLTAGE:  return INFO_PANEL_CELL_BALANCE;
+        case INFO_PANEL_CELL_BALANCE:  return INFO_PANEL_EFFICIENCY;
+        case INFO_PANEL_EFFICIENCY:    return INFO_PANEL_SOH;
+        case INFO_PANEL_SOH:           return INFO_PANEL_PACK_VOLTAGE;
+        default:                       return INFO_PANEL_PACK_VOLTAGE;
+    }
 #endif
 }
 
 static void advance_info_panel(void)
 {
     int panel = lv_subject_get_int(&info_panel);
-    int count = info_panel_count();
-    panel = (panel + 1) % count;
+    panel = next_info_panel(panel);
     lv_subject_set_int(&info_panel, panel);
-    ESP_LOGI(TAG, "info panel -> %d (%d available)", panel, count);
+    ESP_LOGI(TAG, "info panel -> %d (%d available)", panel, info_panel_count());
 }
 
 static void check_charging_transitions(void)
@@ -98,7 +118,7 @@ static void check_charging_transitions(void)
 
 #if !DASH_INCLUDE_CHARGING_IN_CYCLE
     if(st != SYSSTATE_SYS_CHARGE &&
-       lv_subject_get_int(&info_panel) >= info_panel_count()) {
+       lv_subject_get_int(&info_panel) == INFO_PANEL_CHARGING) {
         lv_subject_set_int(&info_panel, INFO_PANEL_PACK_VOLTAGE);
     }
 #endif

@@ -15,6 +15,7 @@ extern "C" {
 
 #include "ev_dash_gen.h"
 #include "user_code/lvgl_compat.h"
+#include "user_code/ev_dash_compat.h"
 
 /*********************
  *      DEFINES

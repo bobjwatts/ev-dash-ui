@@ -19,6 +19,7 @@
 #include "esp_twai.h"
 #include "esp_twai_onchip.h"
 #include "ev_dash_gen.h"
+#include "bms_cell_health.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -27,6 +28,8 @@
 #include <string.h>
 
 static const char *TAG = "zv_can";
+
+static int s_last_opmode = -1;
 
 #define ZV_CAN_TX_GPIO   GPIO_NUM_4
 #define ZV_CAN_RX_GPIO   GPIO_NUM_5
@@ -62,9 +65,17 @@ typedef struct {
     bool     have_hour;
     bool     have_min;
     bool     have_u12v;
+    bool     have_uaux;
+    bool     have_tmpaux;
+    bool     have_deltav;
     bool     have_bms_vmin;
     bool     have_bms_vmax;
+    bool     have_bms_tmin;
     bool     have_bms_tmax;
+    bool     have_bms_tavg;
+    bool     have_bms_charge_lim;
+    bool     have_bms_soh;
+    bool     have_chg_temp;
     bool     have_ccs_i;
 
     int32_t  opmode;
@@ -83,9 +94,17 @@ typedef struct {
     int32_t  hour;
     int32_t  minute;
     float    u12v;
+    float    uaux;
+    float    tmpaux;
+    float    deltav;
     float    bms_vmin;
     float    bms_vmax;
+    float    bms_tmin;
     float    bms_tmax;
+    float    bms_tavg;
+    float    bms_charge_lim;
+    int32_t  bms_soh;
+    float    chg_temp;
     float    ccs_i;
 
     uint32_t rx_frames;
@@ -148,14 +167,47 @@ static const char *zv_gear_to_str(int gear_pos)
     }
 }
 
+/* VCU leaves BMS temps at 0 when no BMS is configured — treat 0 as unset. */
+static bool zv_temp_usable(float temp_c, bool have)
+{
+    return have && temp_c > -50.0f && temp_c < 200.0f && temp_c != 0.0f;
+}
+
+static bool zv_pick_batt_temp_c(const zv_snapshot_t *snap, int *temp_c_out)
+{
+    if(zv_temp_usable(snap->bms_tmax, snap->have_bms_tmax)) {
+        *temp_c_out = (int)(snap->bms_tmax + 0.5f);
+        return true;
+    }
+    if(zv_temp_usable(snap->bms_tavg, snap->have_bms_tavg)) {
+        *temp_c_out = (int)(snap->bms_tavg + 0.5f);
+        return true;
+    }
+    if(zv_temp_usable(snap->bms_tmin, snap->have_bms_tmin)) {
+        *temp_c_out = (int)(snap->bms_tmin + 0.5f);
+        return true;
+    }
+    if(zv_temp_usable(snap->tmpaux, snap->have_tmpaux)) {
+        *temp_c_out = (int)(snap->tmpaux + 0.5f);
+        return true;
+    }
+    if(zv_temp_usable(snap->chg_temp, snap->have_chg_temp)) {
+        *temp_c_out = (int)(snap->chg_temp + 0.5f);
+        return true;
+    }
+    return false;
+}
+
 static int zv_opmode_to_sys_state(int32_t opmode)
 {
+    /* ZV opmode: 0=Off, 1=Run, 2=Precharge, 3=PchFail, 4=Charge, 5=Preheat */
     switch(opmode) {
         case 1: return SYSSTATE_SYS_READY;
         case 2: return SYSSTATE_SYS_ACTIVE;
         case 4: return SYSSTATE_SYS_CHARGE;
         case 3: return SYSSTATE_SYS_FAULT;
-        default: return SYSSTATE_SYS_READY;
+        case 0: return SYSSTATE_SYS_OFF;
+        default: return SYSSTATE_SYS_OFF;
     }
 }
 
@@ -260,15 +312,47 @@ static void snapshot_apply_param(zv_snapshot_t *snap, uint16_t param_id, float v
         case ZV_PARAM_U12V:
             snapshot_set_float(&snap->u12v, &snap->have_u12v, val);
             break;
+        case ZV_PARAM_UAUX:
+            snapshot_set_float(&snap->uaux, &snap->have_uaux, val);
+            break;
+        case ZV_PARAM_TMPAUX:
+            snapshot_set_float(&snap->tmpaux, &snap->have_tmpaux, val);
+            break;
+        case ZV_PARAM_DELTAV:
+            snapshot_set_float(&snap->deltav, &snap->have_deltav, val);
+            break;
+        case ZV_PARAM_CHG_TEMP:
+            snapshot_set_float(&snap->chg_temp, &snap->have_chg_temp, val);
+            break;
         case ZV_PARAM_BMS_VMIN:
             snapshot_set_float(&snap->bms_vmin, &snap->have_bms_vmin, val);
             break;
         case ZV_PARAM_BMS_VMAX:
             snapshot_set_float(&snap->bms_vmax, &snap->have_bms_vmax, val);
             break;
+        case ZV_PARAM_BMS_TMIN:
+            snapshot_set_float(&snap->bms_tmin, &snap->have_bms_tmin, val);
+            break;
         case ZV_PARAM_BMS_TMAX:
             snapshot_set_float(&snap->bms_tmax, &snap->have_bms_tmax, val);
             break;
+        case ZV_PARAM_BMS_TAVG:
+            snapshot_set_float(&snap->bms_tavg, &snap->have_bms_tavg, val);
+            break;
+        case ZV_PARAM_BMS_CHARGE_LIM:
+            snapshot_set_float(&snap->bms_charge_lim, &snap->have_bms_charge_lim, val);
+            break;
+        case ZV_PARAM_BMS_SOH: {
+            int soh = (int)(val + 0.5f);
+            if(soh < 0) {
+                soh = 0;
+            }
+            if(soh > 100) {
+                soh = 100;
+            }
+            snapshot_set_i32(&snap->bms_soh, &snap->have_bms_soh, soh);
+            break;
+        }
         case ZV_PARAM_CCS_I:
             snapshot_set_float(&snap->ccs_i, &snap->have_ccs_i, val);
             break;
@@ -296,6 +380,9 @@ static bool zv_resolve_spot_param(uint32_t can_id, uint16_t *param_id_out)
         case ZV_STD_CAN_BMS_VMAX: *param_id_out = ZV_PARAM_BMS_VMAX; return true;
         case ZV_STD_CAN_BMS_TMAX: *param_id_out = ZV_PARAM_BMS_TMAX; return true;
         case ZV_STD_CAN_CCS_I:    *param_id_out = ZV_PARAM_CCS_I;    return true;
+        case ZV_STD_CAN_BMS_TMIN: *param_id_out = ZV_PARAM_BMS_TMIN; return true;
+        case ZV_STD_CAN_BMS_TAVG: *param_id_out = ZV_PARAM_BMS_TAVG; return true;
+        case ZV_STD_CAN_BMS_SOH:  *param_id_out = ZV_PARAM_BMS_SOH;  return true;
         default:
             break;
     }
@@ -393,6 +480,26 @@ static bool IRAM_ATTR zv_on_error(twai_node_handle_t handle, const twai_error_ev
     return false;
 }
 
+static void zv_try_cell_health_snapshot(const zv_snapshot_t * local, int balance_mv)
+{
+    if(!local->have_opmode || local->opmode != 1) {
+        return;
+    }
+    if(bms_cell_health_snapshot_done()) {
+        return;
+    }
+
+    float vmin = local->have_bms_vmin ? local->bms_vmin : 0.0f;
+    float vmax = local->have_bms_vmax ? local->bms_vmax : 0.0f;
+    if(!bms_cell_health_try_snapshot(vmin, vmax, balance_mv)) {
+        return;
+    }
+
+    lv_subject_set_int(&cell_health_ready, 1);
+    ESP_LOGI(TAG, "cell health snapshot vmin=%.3f vmax=%.3f balance=%d mV",
+             vmin, vmax, balance_mv);
+}
+
 static void zv_can_apply_timer_cb(lv_timer_t *timer)
 {
     LV_UNUSED(timer);
@@ -440,8 +547,11 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
         lv_subject_set_float(&battery_current_a, local.idc);
     }
 
-    if(local.have_bms_tmax) {
-        lv_subject_set_int(&batt_temp_c, (int)(local.bms_tmax + 0.5f));
+    {
+        int batt_c = 0;
+        if(zv_pick_batt_temp_c(&local, &batt_c)) {
+            lv_subject_set_int(&batt_temp_c, batt_c);
+        }
     }
 
     if(local.have_tmphs) {
@@ -452,16 +562,32 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
         lv_subject_set_int(&motor_temp_c, (int)(local.tmpm + 0.5f));
     }
 
-    if(local.have_u12v) {
+    if(local.have_uaux) {
+        lv_subject_set_float(&aux_voltage_v, local.uaux);
+    } else if(local.have_u12v) {
         lv_subject_set_float(&aux_voltage_v, local.u12v);
     }
 
-    if(local.have_bms_vmin && local.have_bms_vmax) {
-        int balance_mv = (int)((local.bms_vmax - local.bms_vmin) * 1000.0f + 0.5f);
-        if(balance_mv < 0) {
-            balance_mv = 0;
+    {
+        int balance_mv = -1;
+
+        if(local.have_bms_vmin && local.have_bms_vmax &&
+           local.bms_vmin > 0.5f && local.bms_vmax > 0.5f) {
+            balance_mv = (int)((local.bms_vmax - local.bms_vmin) * 1000.0f + 0.5f);
+        } else if(local.have_deltav) {
+            float spread_v = local.deltav >= 0.0f ? local.deltav : -local.deltav;
+            balance_mv = (int)(spread_v * 1000.0f + 0.5f);
         }
-        lv_subject_set_int(&cell_balance_mv, balance_mv);
+
+        if(balance_mv >= 0) {
+            lv_subject_set_int(&cell_balance_mv, balance_mv);
+        }
+
+        zv_try_cell_health_snapshot(&local, balance_mv);
+    }
+
+    if(local.have_bms_soh) {
+        lv_subject_set_int(&state_of_health_pct, (int)local.bms_soh);
     }
 
     if(local.have_kwh) {
@@ -512,6 +638,12 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
     }
 
     if(local.have_opmode) {
+        int op = (int)local.opmode;
+        if(op == 0 && s_last_opmode != 0) {
+            bms_cell_health_reset_drive();
+            lv_subject_set_int(&cell_health_ready, 0);
+        }
+        s_last_opmode = op;
         lv_subject_set_int(&sys_state, zv_opmode_to_sys_state(local.opmode));
     }
 
@@ -521,6 +653,8 @@ static void zv_can_apply_timer_cb(lv_timer_t *timer)
 
     if(local.have_ccs_i) {
         lv_subject_set_float(&charge_amps_a, local.ccs_i);
+    } else if(local.have_bms_charge_lim && local.bms_charge_lim > 0.0f) {
+        lv_subject_set_float(&charge_amps_a, local.bms_charge_lim);
     } else if(local.have_idc && local.have_opmode && local.opmode == 4) {
         lv_subject_set_float(&charge_amps_a, local.idc > 0.0f ? local.idc : -local.idc);
     }

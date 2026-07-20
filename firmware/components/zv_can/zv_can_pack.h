@@ -17,15 +17,27 @@
  *   can t tmphs     1284 31 -32 32
  *   can t tmpm      1284 63 -32 32
  *   can t speed     1285 31 -32 32
- *   can t kwh       1285 63 -32 32
+ *   can t KWh       1285 63 -32 32
  *   can t Hour      1286 31 -32 32
  *   can t Min       1286 63 -32 32
- *   can t U12V      1287 31 -32 32
+ *   can t uaux      1287 31 -32 32
  *   can t CCS_I     1287 63 -32 32
+ *   can t BMS_Tavg  1288 31 -32 32   (Leaf BMS — no cell min/max in ZV)
+ *   can t BMS_ChargeLim 1288 63 -32 32
+ *   can t tmpaux    1289 31 -32 32
+ *   can t deltaV    1289 63 -32 32
+ *
+ * SimpBMS / Kangoo (cell min/max instead of Tavg on 1288):
  *   can t BMS_Vmin  1288 31 -32 32
  *   can t BMS_Vmax  1288 63 -32 32
- *   can t BMS_Tmax  1289 31 -32 32
- *   can t udc       1289 63 -32 32
+ *
+ * ZE1 Leaf with 0x5C0 decode in leafbms.cpp (cell min/max on 1289):
+ *   can t BMS_Vmin  1289 31 -32 32
+ *   can t BMS_Vmax  1289 63 -32 32
+ *
+ * Pack SOH from Leaf 0x5BC (leafbms.cpp publishes BMS_SOH param 2124):
+ *   can b BMS_SOH
+ *   (extended 0x02A084C, or std remap 1809 on dash receive path)
  *
  * CAN IDs are 0x500..0x509 (decimal 1280..1289), within 11-bit limit.
  */
@@ -62,9 +74,9 @@ static const zv_pack_frame_def_t zv_pack_frames[ZV_PACK_FRAME_COUNT] = {
     { 0x504, ZV_PARAM_TMPHS,     ZV_PARAM_TMPM,      ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
     { 0x505, ZV_PARAM_SPEED_RPM, ZV_PARAM_KWH,       ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
     { 0x506, ZV_PARAM_HOUR,      ZV_PARAM_MIN,       ZV_PACK_VAL_INT,   ZV_PACK_VAL_INT   },
-    { 0x507, ZV_PARAM_U12V,      ZV_PARAM_CCS_I,     ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
-    { 0x508, ZV_PARAM_BMS_VMIN,  ZV_PARAM_BMS_VMAX,  ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
-    { 0x509, ZV_PARAM_BMS_TMAX,  ZV_PARAM_UDC,       ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
+    { 0x507, ZV_PARAM_UAUX,      ZV_PARAM_CCS_I,     ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
+    { 0x508, ZV_PARAM_BMS_TAVG,      ZV_PARAM_BMS_CHARGE_LIM, ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
+    { 0x509, ZV_PARAM_TMPAUX,     ZV_PARAM_DELTAV,    ZV_PACK_VAL_FLOAT, ZV_PACK_VAL_FLOAT },
 };
 
 static inline int32_t zv_spot32_from_float(float value)

@@ -79,6 +79,11 @@ lvgl-cli.zip
 *.zip
 !ui/fonts/*.zip
 
+# --- Vendored ZombieVerter VCU (clone deps with: make get-deps) ---
+Stm32-vcu-master/Stm32-vcu-master/libopencm3/
+Stm32-vcu-master/Stm32-vcu-master/libopeninv/
+Stm32-vcu-master/Stm32-vcu-master/obj/
+
 # --- Misc local ---
 .tmp-esp-dev-kits/
 build_output.txt

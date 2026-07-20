@@ -81,9 +81,10 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
     lv_obj_remove_flag(active_arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(active_arc, LV_OPA_TRANSP, 0);
     lv_obj_set_style_arc_width(active_arc, 30, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(active_arc, COLOR_WHITE, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(active_arc, COLOR_GREY_DARK, LV_PART_MAIN);
     lv_obj_set_style_arc_width(active_arc, 30, LV_PART_INDICATOR);
     lv_obj_set_style_arc_color(active_arc, COLOR_GAUGE_ACTIVE, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(active_arc, false, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(active_arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_outline_width(active_arc, 0, LV_PART_KNOB);
     lv_obj_set_style_pad_all(active_arc, 0, LV_PART_KNOB);
@@ -117,7 +118,7 @@ lv_obj_t * speedometer_create(lv_obj_t * parent, lv_subject_t * speed, lv_subjec
         lv_snprintf(buf, sizeof(buf), "%d", v);
         lv_label_set_text(lbl, buf);
         lv_obj_set_style_text_font(lbl, font_body, 0);
-        lv_obj_set_style_text_color(lbl, COLOR_WHITE, 0);
+        lv_obj_set_style_text_color(lbl, COLOR_GREY_DARK, 0);
         lv_obj_align(lbl, LV_ALIGN_CENTER, x_ofs, y_ofs);
         /* user_data: bits[N:1] = threshold speed, bit[0] = current active state */
         lv_obj_set_user_data(lbl, (void *)(uintptr_t)(v << 1 | 0));
@@ -171,5 +172,5 @@ static void speed_label_cb(lv_observer_t * observer, lv_subject_t * subject)
     bool is_active    = lv_subject_get_int(subject) >= threshold;
     if(was_active == is_active) return;   /* state unchanged — skip redraw entirely */
     lv_obj_set_user_data(lbl, (void *)((uintptr_t)(threshold << 1) | (uintptr_t)is_active));
-    lv_obj_set_style_text_color(lbl, is_active ? COLOR_GAUGE_ACTIVE : COLOR_WHITE, 0);
+    lv_obj_set_style_text_color(lbl, is_active ? COLOR_GAUGE_ACTIVE : COLOR_GREY_DARK, 0);
 }

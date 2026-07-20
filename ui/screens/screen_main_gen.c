@@ -17,8 +17,10 @@
 
 #include "screen_main_gen.h"
 #include "../ev_dash.h"
+#include "../user_code/ev_dash_typography.h"
 #include "../components/top_bar/top_bar_gen.h"
 #include "../components/info_gauge/info_gauge_gen.h"
+#include "../components/power_gauge/power_gauge_gen.h"
 #include "../user_code/blinker.h"
 
 /*********************
@@ -88,7 +90,7 @@ lv_obj_t * screen_main_create(void)
 
     /* Left blinker arrow */
     lv_obj_t * left_blinker = lv_label_create(dial_row);
-    lv_label_set_text(left_blinker, LV_SYMBOL_LEFT);
+    lv_label_set_text(left_blinker, "\xe2\x80\xb9");   /* ‹ — chevron; Figma uses vector ◄ */
     lv_obj_set_style_text_font(left_blinker, font_heading, 0);
     lv_obj_set_style_text_color(left_blinker, COLOR_GREY_DARK, 0);
     lv_obj_set_width(left_blinker, BLINKER_W);
@@ -99,7 +101,7 @@ lv_obj_t * screen_main_create(void)
 
     /* Right blinker arrow */
     lv_obj_t * right_blinker = lv_label_create(dial_row);
-    lv_label_set_text(right_blinker, LV_SYMBOL_RIGHT);
+    lv_label_set_text(right_blinker, "\xe2\x80\xba");   /* › — chevron; Figma uses vector ► */
     lv_obj_set_style_text_font(right_blinker, font_heading, 0);
     lv_obj_set_style_text_color(right_blinker, COLOR_GREY_DARK, 0);
     lv_obj_set_width(right_blinker, BLINKER_W);
@@ -110,6 +112,8 @@ lv_obj_t * screen_main_create(void)
 
     /* Blinker flash timer — 500 ms, toggles amber when subject is set */
     blinker_init(left_blinker, right_blinker);
+
+    ev_dash_apply_letter_spacing(root);
 
     LV_TRACE_OBJ_CREATE("finished");
 
