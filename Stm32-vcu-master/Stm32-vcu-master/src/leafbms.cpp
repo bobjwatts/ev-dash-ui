@@ -33,11 +33,57 @@ static int leaf_temp_c_from_5c0_byte2(uint8_t b2)
   return ((b2 >> 1) - 40);
 }
 
-static float leaf_ze1_cell_v_from_5c0(const uint8_t *bytes)
+static float leaf_cell_v_from_5c0(const uint8_t *bytes)
 {
-  /* EV-can_ZE1.dbc: LB_HistData_Cell_Voltage_* @ bit 42, 6 bits, factor 40, offset 1900 mV */
+  /* ZE0/AZE0/ZE1: LB_HistData_Cell_Voltage @ bit 42, 6 bits, ×40 + 1900 mV */
   uint8_t raw = (bytes[5] >> 2) & 0x3F;
   return (raw * 40.0f + 1900.0f) / 1000.0f;
+}
+
+static void leaf_decode_5c0_legacy(const uint8_t *bytes)
+{
+  /* ZE0 + AZE0: mux in byte0 bits 6..7 (EV-can_ZE0.dbc) — 1=MAX, 2=AVG, 3=MIN */
+  uint8_t mux = bytes[0] >> 6;
+  int temp_c = leaf_temp_c_from_5c0_byte2(bytes[2]);
+
+  switch (mux) {
+  case 1:
+    Param::SetInt(Param::BMS_Tmax, temp_c);
+    Param::SetFloat(Param::BMS_Vmax, leaf_cell_v_from_5c0(bytes));
+    break;
+  case 2:
+    Param::SetInt(Param::BMS_Tavg, temp_c);
+    break;
+  case 3:
+    Param::SetInt(Param::BMS_Tmin, temp_c);
+    Param::SetFloat(Param::BMS_Vmin, leaf_cell_v_from_5c0(bytes));
+    break;
+  default:
+    break;
+  }
+}
+
+static void leaf_decode_5c0_ze1(const uint8_t *bytes)
+{
+  /* ZE1: mux in byte0 bits 0..2 (EV-can_ZE1.dbc) */
+  uint8_t mux = bytes[0] & 0x07;
+  int temp_c = leaf_temp_c_from_5c0_byte2(bytes[2]);
+
+  switch (mux) {
+  case 1:
+    Param::SetInt(Param::BMS_Tmax, temp_c);
+    Param::SetFloat(Param::BMS_Vmax, leaf_cell_v_from_5c0(bytes));
+    break;
+  case 2:
+    Param::SetInt(Param::BMS_Tavg, temp_c);
+    break;
+  case 3:
+    Param::SetInt(Param::BMS_Tmin, temp_c);
+    Param::SetFloat(Param::BMS_Vmin, leaf_cell_v_from_5c0(bytes));
+    break;
+  default:
+    break;
+  }
 }
 
 void LeafBMS::Task100Ms() {
@@ -50,8 +96,8 @@ void LeafBMS::SetCanInterface(CanHardware *can) {
   can->RegisterUserMessage(0x1DC); // Leaf BMS message 10ms
   can->RegisterUserMessage(0x55B); // Leaf BMS message 100ms
   can->RegisterUserMessage(0x5BC); // Leaf BMS message 100ms (500ms on ZE0)
-  can->RegisterUserMessage(0x5C0); // Leaf BMS historical mux (500ms) — ZE1 temps + cell min/max
-  // can->RegisterUserMessage(0x59E);//Leaf BMS message 500ms (Only on AZE0)
+  can->RegisterUserMessage(0x5C0); // Leaf BMS historical mux (500ms) — cell min/max + temps
+  can->RegisterUserMessage(0x59E); // Leaf BMS 500ms (AZE0/ZE1 battery detect)
   can->RegisterUserMessage(0x1C2); // Leaf BMS message 10ms (ZE1)
   can->RegisterUserMessage(0x1ED); // Leaf BMS message 10ms (ZE1, only on 62kWh)
 }
@@ -148,34 +194,10 @@ void LeafBMS::DecodeCAN(int id, uint8_t *data) {
     break;
   }
   case 0x5C0: {
-    if (LEAF_battery_Type == AZE0_BATTERY) {
-      /* AZE0 mux in upper bits of byte 0 */
-      if ((bytes[0] >> 6) == 1) {
-        temperature = leaf_temp_c_from_5c0_byte2(bytes[2]);
-        Param::SetInt(Param::BMS_Tavg, temperature);
-      }
-    } else if (LEAF_battery_Type == ZE1_BATTERY) {
-      /* ZE1 EV-can: LB_Historical_Data_Swich_Flag mux in byte0 bits 0..2
-       * 1=MAX, 2=AVG, 3=MIN — same layout for temperature and cell voltage */
-      uint8_t mux = bytes[0] & 0x07;
-      int temp_c = leaf_temp_c_from_5c0_byte2(bytes[2]);
-
-      switch (mux) {
-      case 1:
-        Param::SetInt(Param::BMS_Tmax, temp_c);
-        Param::SetFloat(Param::BMS_Vmax, leaf_ze1_cell_v_from_5c0(bytes));
-        break;
-      case 2:
-        Param::SetInt(Param::BMS_Tavg, temp_c);
-        break;
-      case 3:
-        Param::SetInt(Param::BMS_Tmin, temp_c);
-        Param::SetFloat(Param::BMS_Vmin, leaf_ze1_cell_v_from_5c0(bytes));
-        break;
-      default:
-        break;
-      }
-    }
+    if (LEAF_battery_Type == ZE1_BATTERY)
+      leaf_decode_5c0_ze1(bytes);
+    else
+      leaf_decode_5c0_legacy(bytes); /* ZE0 default + AZE0 */
     break;
   }
   case 0x59E: {
