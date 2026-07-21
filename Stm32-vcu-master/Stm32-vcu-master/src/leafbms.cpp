@@ -40,6 +40,11 @@ static float leaf_ze1_cell_v_from_5c0(const uint8_t *bytes)
   return (raw * 40.0f + 1900.0f) / 1000.0f;
 }
 
+void LeafBMS::Task100Ms() {
+  /* Leaf CAN updates BMS_Vmin/Vmax/temps in DecodeCAN. Base BMS::Task100Ms zeros
+   * them every 100 ms — do not call it or spot values stay at 0. */
+}
+
 void LeafBMS::SetCanInterface(CanHardware *can) {
   can->RegisterUserMessage(0x1DB); // Leaf BMS message 10ms
   can->RegisterUserMessage(0x1DC); // Leaf BMS message 10ms
