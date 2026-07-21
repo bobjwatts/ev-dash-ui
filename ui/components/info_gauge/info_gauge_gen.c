@@ -50,8 +50,8 @@
 #define SOH_DOT_PITCH_Y     10
 #define SOH_GRID_TOP_Y      0   /* first row offset from dial centre (down) */
 
-/** Per-row dot counts (14×4 + 12 + 10 + 8 + 6 + 4 = 96). */
-static const uint8_t s_soh_row_counts[] = { 14, 14, 14, 14, 12, 10, 8, 6, 4 };
+/** Per-row dot counts (16×2 + 14×2 + 12×2 + 8 + 4 = 96). */
+static const uint8_t s_soh_row_counts[] = { 16, 16, 14, 14, 12, 12, 8, 4 };
 #define SOH_ROW_COUNT  ((int)(sizeof(s_soh_row_counts) / sizeof(s_soh_row_counts[0])))
 
 /**********************
