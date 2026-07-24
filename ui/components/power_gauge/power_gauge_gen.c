@@ -114,7 +114,7 @@ lv_obj_t * power_gauge_create(lv_obj_t * parent,
     lv_obj_remove_flag(bg_arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(bg_arc, LV_OPA_TRANSP, 0);
     lv_obj_set_style_arc_width(bg_arc, POWER_ARC_WIDTH, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(bg_arc, COLOR_GREY_DARK, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(bg_arc, COLOR_GRAY2, LV_PART_MAIN);
     lv_obj_set_style_arc_rounded(bg_arc, false, LV_PART_MAIN);
     lv_obj_set_style_arc_opa(bg_arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(bg_arc, LV_OPA_TRANSP, LV_PART_KNOB);
