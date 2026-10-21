@@ -1,8 +1,13 @@
 #include "dashboard_buttons.h"
+#include "riverdi_display.h"
 #include "zv_can.h"
 #include "bsp/esp-bsp.h"
 #include "bsp/display.h"
 #include "esp_log.h"
+#if CONFIG_EV_DASH_STARTUP_HEAP_DIAGNOSTIC
+#include "esp_heap_caps.h"
+#include "esp_private/startup_internal.h"
+#endif
 #include "ev_dash.h"
 #include "ev_dash_gen.h"
 #include "images/ev_dash_assets.h"
@@ -15,10 +20,23 @@ extern const lv_image_dsc_t dial_speed_needle_data;
 
 static const char *TAG = "ev_dash";
 
+#if CONFIG_EV_DASH_STARTUP_HEAP_DIAGNOSTIC
+/* Diagnostic build only: see the early-startup limitation in firmware/README.md. */
+ESP_SYSTEM_INIT_FN(dashboard_startup_heap_diagnostic, SECONDARY, BIT(0), 998)
+{
+    bool valid = heap_caps_check_integrity_all(true);
+    ESP_LOGI(TAG, "Startup heap diagnostic: %s (diagnostic build enabled)", valid ? "PASS" : "FAIL");
+    return valid ? ESP_OK : ESP_FAIL;
+}
+#endif
+
 void app_main(void)
 {
     ESP_LOGI(TAG, "Starting EV dash on ESP32-P4");
 
+#if CONFIG_EV_DASH_DISPLAY_RIVERDI
+    lv_display_t *disp = riverdi_display_start();
+#else
     bsp_display_cfg_t disp_cfg = {
         .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
         /* buffer_size / buff_spiram ignored in avoid_tearing mode —
@@ -40,6 +58,7 @@ void app_main(void)
     };
 
     lv_display_t *disp = bsp_display_start_with_config(&disp_cfg);
+#endif
     if (disp == NULL) {
         ESP_LOGE(TAG, "Display init failed");
         return;
@@ -48,11 +67,22 @@ void app_main(void)
     ESP_LOGI(TAG, "LVGL display resolution: %dx%d",
              lv_display_get_horizontal_resolution(disp),
              lv_display_get_vertical_resolution(disp));
-    ESP_LOGI(TAG, "BSP panel target: %dx%d", BSP_LCD_H_RES, BSP_LCD_V_RES);
-
+#if !CONFIG_EV_DASH_DISPLAY_RIVERDI
+    ESP_LOGI(TAG, "Stock BSP panel target: %dx%d", BSP_LCD_H_RES, BSP_LCD_V_RES);
     bsp_display_backlight_on();
+#endif
 
     bsp_display_lock(0);
+
+#if CONFIG_EV_DASH_RIVERDI_COLOR_TEST
+    lv_obj_t *test_screen = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(test_screen, lv_color_hex(0x0000FF), 0);
+    lv_obj_set_style_bg_opa(test_screen, LV_OPA_COVER, 0);
+    lv_screen_load(test_screen);
+    bsp_display_unlock();
+    ESP_LOGI(TAG, "Riverdi solid BLUE test loaded (disable EV_DASH_RIVERDI_COLOR_TEST for dashboard)");
+    return;
+#endif
 
     ev_dash_init(NULL);
 

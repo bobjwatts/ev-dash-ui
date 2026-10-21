@@ -1,0 +1,50 @@
+menu "EV dashboard display"
+
+    choice EV_DASH_DISPLAY
+        prompt "Connected display"
+        default EV_DASH_DISPLAY_RIVERDI
+
+        config EV_DASH_DISPLAY_RIVERDI
+            bool "Riverdi RVT121HVDFWN00 (SN65DSI83, 1280x800)"
+
+        config EV_DASH_DISPLAY_STOCK
+            bool "Original Function EV Board LCD (existing BSP configuration)"
+    endchoice
+
+    config EV_DASH_RIVERDI_COLOR_TEST
+        bool "Show a solid blue screen instead of the dashboard"
+        depends on EV_DASH_DISPLAY_RIVERDI
+        default n
+        help
+            Enable for a bring-up test through the real DSI stream and LVGL
+            framebuffers. Leave disabled to run the existing dashboard.
+
+    config EV_DASH_STARTUP_HEAP_DIAGNOSTIC
+        bool "Check heap before starting the scheduler (diagnostic build)"
+        default n
+        help
+            Checks and logs heap integrity before FreeRTOS startup. This is an
+            explicit diagnostic for the ESP-IDF 6.1 / P4 v3.2 dashboard startup
+            fault described in firmware/README.md. It changes startup behavior
+            and is not a root-cause fix. Leave disabled for normal builds.
+
+    config EV_DASH_RIVERDI_LVDS_FORMAT1
+        bool "Use JEIDA / LVDS Format 1 instead of VESA / Format 2"
+        depends on EV_DASH_DISPLAY_RIVERDI
+        default n
+        help
+            The module datasheet does not specify the internal LVDS bit mapping.
+            Start with Format 2. If geometry is correct but colors are wrong,
+            try Format 1. This does not change the external DSI wiring.
+
+    config EV_DASH_RIVERDI_BRIDGE_PATTERN
+        bool "Use the SN65DSI83 internal pattern for diagnosis"
+        depends on EV_DASH_RIVERDI_COLOR_TEST
+        default n
+        help
+            The bridge generates LVDS pixels internally, ignoring P4 video data.
+            The P4 still supplies the continuous DSI clock. Use this to separate
+            incoming video problems from bridge/LVDS/panel problems.
+            Disable to return to the P4/LVGL solid blue test.
+
+endmenu

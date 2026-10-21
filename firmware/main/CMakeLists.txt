@@ -1,4 +1,5 @@
 idf_component_register(
-    SRCS "main.c" "dashboard_buttons.c"
+    SRCS "main.c" "dashboard_buttons.c" "riverdi_display.c"
     INCLUDE_DIRS "."
-    REQUIRES ev_dash_ui esp32_p4_function_ev_board esp_timer esp_driver_gpio lvgl__lvgl zv_can)
+    REQUIRES ev_dash_ui esp32_p4_function_ev_board esp_timer esp_driver_gpio lvgl__lvgl zv_can
+    PRIV_REQUIRES esp_driver_i2c esp_lcd esp_hw_support espressif__esp_lvgl_port)

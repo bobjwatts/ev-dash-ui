@@ -5,6 +5,8 @@ dependencies:
     version: "*"
   espressif/esp32_p4_function_ev_board:
     version: "^5.2.0"
+  espressif/esp_lvgl_port:
+    override_path: "../components/espressif__esp_lvgl_port"
   lvgl/lvgl:
-    version: "^9.2.0"
+    version: "9.4.0"
     public: true
