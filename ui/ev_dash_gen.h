@@ -59,7 +59,7 @@ extern "C" {
 
 #define COLOR_WHITE lv_color_hex(0xFFFFFF)
 
-#define COLOR_BG lv_color_hex(0x101010)
+#define COLOR_BG lv_color_hex(0x000000)
 
 #define COLOR_SURFACE lv_color_hex(0x212121)
 

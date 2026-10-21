@@ -58,13 +58,16 @@ lv_obj_t * screen_main_create(void)
     /* ── Root: full-screen flex-column ─────────────────────────────── */
     lv_obj_t * root = lv_obj_create(NULL);
     lv_obj_set_name_static(root, "screen_main_#");
-    lv_obj_set_size(root, 1024, 600);
+    /* A screen starts at the display's full size; centre the fixed 1024x600 content. */
     lv_obj_set_style_bg_color(root, COLOR_BG, 0);
+    lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
     lv_obj_set_style_pad_all(root, 0, 0);
     lv_obj_set_style_pad_row(root, 0, 0);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_flex_main_place(root, LV_FLEX_ALIGN_START, 0);
-    lv_obj_set_style_flex_cross_place(root, LV_FLEX_ALIGN_START, 0);
+    lv_obj_set_style_flex_main_place(root, LV_FLEX_ALIGN_CENTER, 0);
+    lv_obj_set_style_flex_cross_place(root, LV_FLEX_ALIGN_CENTER, 0);
+    /* Cross-place centres items within the track; track-place centres the track on screen. */
+    lv_obj_set_style_flex_track_place(root, LV_FLEX_ALIGN_CENTER, 0);
     lv_obj_set_flag(root, LV_OBJ_FLAG_SCROLLABLE, false);
     lv_obj_set_style_border_width(root, 0, 0);
 
@@ -75,7 +78,7 @@ lv_obj_t * screen_main_create(void)
     lv_obj_t * dial_row = lv_obj_create(root);
     lv_obj_set_name_static(dial_row, "dial_row_#");
     lv_obj_set_width(dial_row, 1024);
-    lv_obj_set_flex_grow(dial_row, 1);          /* fills remaining 545 px */
+    lv_obj_set_height(dial_row, 600 - TOP_BAR_H);
     lv_obj_set_style_bg_opa(dial_row, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(dial_row, 0, 0);
     lv_obj_set_style_pad_all(dial_row, 0, 0);

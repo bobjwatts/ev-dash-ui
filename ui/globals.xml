@@ -90,7 +90,7 @@
 
 		<!-- ── Semantic roles (map to palette above) ─────────── -->
 
-		<color name="COLOR_BG" value="0x101010" />
+		<color name="COLOR_BG" value="0x000000" />
 
 		<color name="COLOR_SURFACE" value="0x212121" />
 

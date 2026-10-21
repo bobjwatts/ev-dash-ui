@@ -39,7 +39,9 @@ For an existing build, run `idf.py menuconfig` once and verify the new selection
 `sdkconfig.defaults` does not overwrite values already saved in `sdkconfig`.
 The default Riverdi build loads the existing **1024x600 dashboard** on the
 1280x800 display using the existing LVGL direct-mode double framebuffers.
-This hardware change does not resize the UI. To repeat the verified P4 video
+The UI keeps its original size and is centred on a full-screen black background:
+128-pixel side margins and 100-pixel top/bottom margins on the Riverdi.
+To repeat the verified P4 video
 test, enable **Show a solid blue screen instead of the dashboard** in the same
 menu. Riverdi startup does not probe the dev-board touchscreen; this module
 has no touch controller.
